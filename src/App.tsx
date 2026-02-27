@@ -13,6 +13,9 @@ import { BlueprintsMarketplace } from './views/BlueprintsMarketplace';
 import { SettingsManager } from './views/SettingsManager';
 import { ThemeManager } from './views/ThemeManager';
 import { InfinityCanvas } from './views/InfinityCanvas';
+import { ChronosTaskScheduler } from './views/ChronosTaskScheduler';
+import { MeshManager } from './views/MeshManager';
+import { AuditBlackbox } from './views/AuditBlackbox';
 import { 
   LayoutDashboard, 
   Layers, 
@@ -30,10 +33,12 @@ import {
   GitBranch,
   Palette,
   Stethoscope,
-  Library
+  Library,
+  Calendar,
+  ShieldAlert
 } from 'lucide-react';
 
-type ViewType = 'dashboard' | 'canvas' | 'iam' | 'orchestrator' | 'networking' | 'vault' | 'warp' | 'gitops' | 'tunnels' | 'ghost' | 'aidoctor' | 'blueprints' | 'theme' | 'settings' | 'notifications' | 'profile';
+type ViewType = 'dashboard' | 'canvas' | 'iam' | 'orchestrator' | 'networking' | 'vault' | 'warp' | 'gitops' | 'tunnels' | 'ghost' | 'aidoctor' | 'blueprints' | 'chronos' | 'mesh' | 'audit' | 'theme' | 'settings' | 'notifications' | 'profile';
 
 const NavItem: React.FC<{ 
   view: ViewType; 
@@ -84,6 +89,9 @@ const App: React.FC = () => {
       case 'ghost': return <GhostProtocol />;
       case 'aidoctor': return <AIDoctor />;
       case 'blueprints': return <BlueprintsMarketplace />;
+      case 'chronos': return <ChronosTaskScheduler />;
+      case 'mesh': return <MeshManager />;
+      case 'audit': return <AuditBlackbox />;
       case 'settings': return <SettingsManager />;
       case 'theme': return <ThemeManager />;
       default: return (
@@ -144,6 +152,10 @@ const App: React.FC = () => {
           <NavItem view="ghost" activeView={activeView} setActiveView={setActiveView} icon={<Shield size={20} />} label="Ghost Protocol" isMenuOpen={isMenuOpen} />
           <NavItem view="aidoctor" activeView={activeView} setActiveView={setActiveView} icon={<Stethoscope size={20} />} label="AI Doctor" isMenuOpen={isMenuOpen} />
           <NavItem view="blueprints" activeView={activeView} setActiveView={setActiveView} icon={<Library size={20} />} label="Blueprints" isMenuOpen={isMenuOpen} />
+          <div className={`h-px bg-brand-border my-2 transition-all ${isMenuOpen ? 'w-full' : 'w-10 mx-auto'}`} />
+          <NavItem view="chronos" activeView={activeView} setActiveView={setActiveView} icon={<Calendar size={20} />} label="Chronos" isMenuOpen={isMenuOpen} />
+          <NavItem view="mesh" activeView={activeView} setActiveView={setActiveView} icon={<Network size={20} />} label="Mesh" isMenuOpen={isMenuOpen} />
+          <NavItem view="audit" activeView={activeView} setActiveView={setActiveView} icon={<ShieldAlert size={20} />} label="Audit Blackbox" isMenuOpen={isMenuOpen} />
           <div className={`h-px bg-brand-border my-2 transition-all ${isMenuOpen ? 'w-full' : 'w-10 mx-auto'}`} />
           <NavItem view="theme" activeView={activeView} setActiveView={setActiveView} icon={<Palette size={20} />} label="Chameleon" isMenuOpen={isMenuOpen} />
         </div>
