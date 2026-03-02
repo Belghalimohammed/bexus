@@ -11,9 +11,9 @@ export const InfinityCanvas: React.FC = () => {
       id: 'default',
       name: 'Main Dashboard',
       widgets: [
-        { id: '1', type: 'resource', x: 0, y: 0, w: 4, h: 2 },
+        { id: '1', type: 'gauge', x: 0, y: 0, w: 4, h: 2 },
         { id: '2', type: 'terminal', x: 4, y: 0, w: 4, h: 2 },
-        { id: '3', type: 'uptime', x: 8, y: 0, w: 4, h: 2 },
+        { id: '3', type: 'uptime_sla', x: 8, y: 0, w: 4, h: 2 },
       ]
     }
   ]);
@@ -52,13 +52,22 @@ export const InfinityCanvas: React.FC = () => {
   const addWidget = useCallback((type: WidgetType) => {
     const id = Math.random().toString(36).substr(2, 9);
     updateActivePageWidgets(prev => {
+      let w = 4, h = 2;
+      
+      // Custom sizes based on widget type
+      if (type === 'vm' || type === 'sql' || type === 'iframe') { w = 4; h = 3; }
+      if (type === 'terminal') { w = 6; h = 4; }
+      if (type === 'git' || type === 'tunnels') { w = 3; h = 4; }
+      if (type === 'gauge' || type === 'uptime_sla' || type === 'waf') { w = 3; h = 2; }
+      if (type === 'sticky') { w = 3; h = 3; }
+
       const newWidget: WidgetInstance = {
         id,
         type,
         x: (prev.length * 4) % 12,
         y: Infinity,
-        w: 4,
-        h: 2,
+        w,
+        h,
       };
       return [...prev, newWidget];
     });
@@ -89,13 +98,13 @@ export const InfinityCanvas: React.FC = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Pages & Widgets Sidebar */}
-      <div className="w-64 bg-brand-sidebar/30 border-r border-brand-border flex flex-col">
-        <div className="p-4 border-b border-brand-border">
+      <div className="w-72 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0">
+        <div className="p-4 border-b border-slate-200 bg-white">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[10px] uppercase tracking-widest font-bold text-brand-text/50">Pages</h2>
+            <h2 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Canvas Pages</h2>
             <button 
               onClick={addPage}
-              className="p-1 hover:bg-brand-text/5 rounded transition-colors text-primary"
+              className="p-1.5 hover:bg-slate-50 rounded-lg transition-colors text-primary border border-slate-200"
               title="Add New Page"
             >
               <Plus size={14} />
@@ -106,13 +115,13 @@ export const InfinityCanvas: React.FC = () => {
               <div 
                 key={page.id}
                 onClick={() => setActivePageId(page.id)}
-                className={`group flex items-center justify-between px-3 py-2 rounded cursor-pointer transition-all ${
-                  activePageId === page.id ? 'bg-primary/10 text-primary' : 'hover:bg-brand-text/5 text-brand-text/60'
+                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${
+                  activePageId === page.id ? 'bg-primary/5 text-primary border border-primary/20' : 'hover:bg-slate-100 text-slate-600 border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-2 overflow-hidden">
                   <FileText size={14} className={activePageId === page.id ? 'opacity-100' : 'opacity-40'} />
-                  <span className="text-xs truncate">{page.name}</span>
+                  <span className="text-xs font-medium truncate">{page.name}</span>
                 </div>
                 {pages.length > 1 && (
                   <button 
@@ -136,18 +145,18 @@ export const InfinityCanvas: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-brand-bg">
+      <div className="flex-1 flex flex-col bg-slate-100">
         {/* Header */}
-        <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar/30">
+        <header className="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white z-10">
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
-              <h1 className="font-serif italic text-xl tracking-tight text-brand-text">NOC Infinity Canvas</h1>
-              <span className="text-[10px] font-mono text-primary opacity-70 uppercase tracking-tighter">
+              <h1 className="font-serif italic text-xl tracking-tight text-slate-900">BEXUS Infinity Canvas</h1>
+              <span className="text-[10px] font-mono text-primary font-bold uppercase tracking-tighter">
                 Active: {activePage.name}
               </span>
             </div>
-            <div className="flex items-center gap-2 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary text-[10px] font-mono uppercase">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <div className="flex items-center gap-2 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded text-emerald-600 text-[10px] font-bold uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live System Active
             </div>
           </div>
@@ -156,8 +165,8 @@ export const InfinityCanvas: React.FC = () => {
               onClick={() => setIs3DMode(!is3DMode)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
                 is3DMode 
-                  ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
-                  : 'bg-brand-sidebar border-brand-border text-brand-text/60 hover:text-brand-text hover:border-brand-text/20'
+                  ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
+                  : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm'
               }`}
             >
               {is3DMode ? <Box size={16} /> : <Layout size={16} />}
@@ -166,16 +175,16 @@ export const InfinityCanvas: React.FC = () => {
               </span>
             </button>
 
-            <div className="flex items-center gap-6 text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">
+            <div className="flex items-center gap-6 text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">
               <span>Lat: 37.7749° N</span>
               <span>Lon: 122.4194° W</span>
-              <span className="text-brand-text opacity-100">{new Date().toLocaleTimeString()}</span>
+              <span className="text-slate-900 opacity-100">{new Date().toLocaleTimeString()}</span>
             </div>
           </div>
         </header>
 
         {/* Canvas or 3D Matrix */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           {is3DMode ? (
             <Matrix3D />
           ) : (
@@ -184,6 +193,19 @@ export const InfinityCanvas: React.FC = () => {
               widgets={activePage.widgets} 
               onLayoutChange={handleLayoutChange}
               onRemoveWidget={removeWidget}
+              onDrop={(type, x, y) => {
+                const id = Math.random().toString(36).substr(2, 9);
+                updateActivePageWidgets(prev => {
+                  let w = 4, h = 2;
+                  if (type === 'vm' || type === 'sql' || type === 'iframe') { w = 4; h = 3; }
+                  if (type === 'terminal') { w = 6; h = 4; }
+                  if (type === 'git' || type === 'tunnels') { w = 3; h = 4; }
+                  if (type === 'gauge' || type === 'uptime_sla' || type === 'waf') { w = 3; h = 2; }
+                  if (type === 'sticky') { w = 3; h = 3; }
+
+                  return [...prev, { id, type, x, y, w, h }];
+                });
+              }}
             />
           )}
         </div>

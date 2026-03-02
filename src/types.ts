@@ -1,5 +1,11 @@
 
-export type WidgetType = 'terminal' | 'resource' | 'subdomain' | 'uptime';
+export type WidgetType = 
+  | 'docker' | 'vm' | 'lb' | 's3' 
+  | 'gauge' | 'sparkline' | 'processes' | 'uptime_sla'
+  | 'terminal' | 'script' | 'sql'
+  | 'tunnels' | 'waf' | 'ssl'
+  | 'git' | 'pipeline' | 'webhook'
+  | 'sticky' | 'clock' | 'iframe';
 
 export interface WidgetInstance {
   id: string;

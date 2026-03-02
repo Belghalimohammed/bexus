@@ -21,6 +21,7 @@ import { HypervisorManager } from './views/HypervisorManager';
 import { NOCMode } from './views/NOCMode';
 import { FinOpsManager } from './views/FinOpsManager';
 import { CredentialsManager } from './views/CredentialsManager';
+import ProfileManager from './views/ProfileManager';
 import { PresenceProvider } from './contexts/PresenceContext';
 import { TourProvider, useTour } from './contexts/TourContext';
 import { TourOverlay } from './components/TourOverlay';
@@ -121,6 +122,7 @@ const AppWrapper: React.FC = () => {
       case 'finops': return <FinOpsManager />;
       case 'settings': return <SettingsManager />;
       case 'credentials': return <CredentialsManager />;
+      case 'profile': return <ProfileManager />;
       case 'theme': return <ThemeManager />;
       default: return (
         <div className="flex-1 flex flex-col bg-brand-bg">
