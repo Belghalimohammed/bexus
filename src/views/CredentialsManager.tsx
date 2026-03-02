@@ -266,7 +266,7 @@ export const CredentialsManager: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <SSHKeyRow name="Nexus-Core-Worker" algo="Ed25519" fingerprint="SHA256:x7v...9k2" />
+                    <SSHKeyRow name="BEXUS-Core-Worker" algo="Ed25519" fingerprint="SHA256:x7v...9k2" />
                     <SSHKeyRow name="Backup-Node-01" algo="RSA 4096" fingerprint="SHA256:p2m...1a4" />
                   </tbody>
                 </table>

@@ -63,8 +63,8 @@ export const GitOpsManager: React.FC = () => {
   ]);
 
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    '[02:14:01] SYSTEM: Nexus Forge Engine v4.2.0 initialized',
-    '[02:14:03] GIT: Connected to github.com/nexus-os/core',
+    '[02:14:01] SYSTEM: BEXUS Forge Engine v4.2.0 initialized',
+    '[02:14:03] GIT: Connected to github.com/bexus-os/core',
     '[02:14:05] PIPELINE: Triggered by commit 7f3a2d (Mohammed B.)',
     '[02:14:07] STEP: Fetch Repository - COMPLETED',
     '[02:14:10] STEP: Containerize Image - IN_PROGRESS',
@@ -108,7 +108,7 @@ export const GitOpsManager: React.FC = () => {
             <GitBranch size={20} />
           </div>
           <div>
-            <h1 className="font-serif italic text-xl tracking-tight text-brand-text">Nexus Forge</h1>
+            <h1 className="font-serif italic text-xl tracking-tight text-brand-text">BEXUS Forge</h1>
             <p className="text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">GitOps Pipeline Orchestrator</p>
           </div>
         </div>

@@ -18,7 +18,7 @@ interface ThemePreset {
 const presets: ThemePreset[] = [
   {
     id: 'nexus',
-    name: 'Nexus Light',
+    name: 'BEXUS Light',
     primary: '#2563eb',
     foreground: '#ffffff',
     bg: '#ffffff',

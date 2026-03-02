@@ -206,7 +206,7 @@ export const NOCMode: React.FC = () => {
           </div>
           <div>
             <h1 className="text-4xl font-serif italic tracking-tight">NOC Command Center</h1>
-            <p className="text-sm font-mono text-white/40 uppercase tracking-[0.5em]">Nexus Infrastructure OS • Global Operations</p>
+            <p className="text-sm font-mono text-white/40 uppercase tracking-[0.5em]">BEXUS Infrastructure OS • Global Operations</p>
           </div>
         </div>
         <div className="flex items-center gap-12">

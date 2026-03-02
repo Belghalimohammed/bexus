@@ -72,7 +72,7 @@ export const TourProvider: React.FC<{ children: React.ReactNode; onNavigate: (ro
       id: 'aidoctor',
       targetId: 'nav-aidoctor',
       title: 'AI Doctor',
-      content: 'The brain of Nexus OS. Our AI behavioral analysis detects anomalies and suggests optimizations to keep your system healthy.',
+      content: 'The brain of BEXUS OS. Our AI behavioral analysis detects anomalies and suggests optimizations to keep your system healthy.',
       route: 'aidoctor'
     }
   ];

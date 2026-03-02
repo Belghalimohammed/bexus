@@ -37,23 +37,23 @@ interface Node {
 export const MeshManager: React.FC = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [token] = useState('nexus_mesh_v1_8f2k9l3m4n5p6q7r8s9t0u1v2w3x4y5z');
+  const [token] = useState('bexus_mesh_v1_8f2k9l3m4n5p6q7r8s9t0u1v2w3x4y5z');
 
   const nodes: Node[] = [
     { 
-      id: 'n1', name: 'Nexus-Primary-01', ip: '192.168.1.10', status: 'online', role: 'manager', region: 'US-East-1',
+      id: 'n1', name: 'BEXUS-Primary-01', ip: '192.168.1.10', status: 'online', role: 'manager', region: 'US-East-1',
       resources: { cpu: 45, ram: 62, disk: 28 }, containers: 12
     },
     { 
-      id: 'n2', name: 'Nexus-Worker-01', ip: '192.168.1.11', status: 'online', role: 'worker', region: 'US-East-1',
+      id: 'n2', name: 'BEXUS-Worker-01', ip: '192.168.1.11', status: 'online', role: 'worker', region: 'US-East-1',
       resources: { cpu: 12, ram: 34, disk: 15 }, containers: 8
     },
     { 
-      id: 'n3', name: 'Nexus-Worker-02', ip: '192.168.1.12', status: 'online', role: 'worker', region: 'EU-West-1',
+      id: 'n3', name: 'BEXUS-Worker-02', ip: '192.168.1.12', status: 'online', role: 'worker', region: 'EU-West-1',
       resources: { cpu: 88, ram: 92, disk: 74 }, containers: 24
     },
     { 
-      id: 'n4', name: 'Nexus-Worker-03', ip: '192.168.1.13', status: 'provisioning', role: 'worker', region: 'AP-South-1',
+      id: 'n4', name: 'BEXUS-Worker-03', ip: '192.168.1.13', status: 'provisioning', role: 'worker', region: 'AP-South-1',
       resources: { cpu: 0, ram: 0, disk: 0 }, containers: 0
     },
   ];
@@ -239,7 +239,7 @@ export const MeshManager: React.FC = () => {
                   <div className="space-y-3">
                     {[
                       'Provision a fresh Ubuntu 22.04+ VPS',
-                      'Install the Nexus Mesh Daemon (curl -sSL get.nexus.io | bash)',
+                      'Install the BEXUS Mesh Daemon (curl -sSL get.bexus.io | bash)',
                       'Paste the join token when prompted by the installer',
                     ].map((step, idx) => (
                       <div key={idx} className="flex gap-3 items-start">

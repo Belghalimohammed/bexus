@@ -1,5 +1,5 @@
 {
-  "name": "Infinity Canvas: NOC Sandbox",
-  "description": "A customizable Network Operations Center (NOC) dashboard with drag-and-drop widgets, resource monitoring, and quick-action tools.",
+  "name": "BEXUS OS",
+  "description": "A comprehensive cloud-native operating system for infrastructure management, GitOps orchestration, and real-time observability.",
   "requestFramePermissions": []
 }

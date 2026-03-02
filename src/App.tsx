@@ -160,7 +160,7 @@ const AppWrapper: React.FC = () => {
                 <div className="w-8 h-8 bg-gradient-to-br from-primary to-emerald-600 rounded flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
                   <ZapIcon size={16} className="fill-current" />
                 </div>
-                <span className="font-bold text-xs tracking-tighter uppercase">Nexus OS</span>
+                <span className="font-bold text-xs tracking-tighter uppercase">BEXUS OS</span>
               </div>
             )}
             {!isMenuOpen && (
