@@ -1,291 +1,267 @@
-import React, { useState, useEffect } from 'react';
-import { GitBranch, Github, Globe, Terminal, Shield, CheckCircle2, XCircle, Clock, ExternalLink, Eye, EyeOff, RefreshCw, Settings, Webhook, GitCommit, History, Plus, Minus, Send, FileCode } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GitWorkspaceView } from '../components/GitWorkspaceView';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, 
+  GitBranch, 
+  History, 
+  Terminal, 
+  CheckCircle2, 
+  XCircle, 
+  Loader2, 
+  Plus, 
+  GripVertical, 
+  ChevronRight,
+  Zap,
+  Box,
+  Cpu,
+  Shield,
+  Clock,
+  ExternalLink,
+  Settings
+} from 'lucide-react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
-interface Repo {
+interface ActionBlock {
   id: string;
   name: string;
-  branch: string;
-  commit: string;
-  status: 'success' | 'failed' | 'building';
-  lastDeploy: string;
-  url: string;
+  status: 'idle' | 'running' | 'success' | 'failed';
+  icon: React.ReactNode;
 }
 
-const repos: Repo[] = [
-  { id: '1', name: 'nexus-api', branch: 'main', commit: '7a2b9c1', status: 'success', lastDeploy: '2m ago', url: 'api.nexus.io' },
-  { id: '2', name: 'nexus-dashboard', branch: 'production', commit: 'f4e2a1b', status: 'building', lastDeploy: 'Just now', url: 'dashboard.nexus.io' },
-  { id: '3', name: 'auth-service', branch: 'main', commit: 'd9c8b7a', status: 'failed', lastDeploy: '1h ago', url: 'auth.nexus.io' },
-];
+interface PipelineColumn {
+  id: string;
+  title: string;
+  blocks: ActionBlock[];
+}
 
 export const GitOpsManager: React.FC = () => {
-  const [activeRepo, setActiveRepo] = useState<Repo>(repos[0]);
-  const [isAutoDeploy, setIsAutoDeploy] = useState(true);
-  const [revealEnv, setRevealEnv] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'workspace' | 'settings'>('overview');
+  const [columns, setColumns] = useState<PipelineColumn[]>([
+    {
+      id: 'source',
+      title: 'Source',
+      blocks: [
+        { id: 's1', name: 'Fetch Repository', status: 'success', icon: <GitBranch size={14} /> },
+        { id: 's2', name: 'Verify Signatures', status: 'success', icon: <Shield size={14} /> },
+      ]
+    },
+    {
+      id: 'build',
+      title: 'Build & Artifacts',
+      blocks: [
+        { id: 'b1', name: 'Install Dependencies', status: 'success', icon: <Box size={14} /> },
+        { id: 'b2', name: 'Containerize Image', status: 'running', icon: <Cpu size={14} /> },
+        { id: 'b3', name: 'Security Scan', status: 'idle', icon: <Shield size={14} /> },
+      ]
+    },
+    {
+      id: 'deploy',
+      title: 'Deployment',
+      blocks: [
+        { id: 'd1', name: 'Push to Registry', status: 'idle', icon: <ExternalLink size={14} /> },
+        { id: 'd2', name: 'Canary Release', status: 'idle', icon: <Zap size={14} /> },
+      ]
+    }
+  ]);
 
-  const envVars = [
-    { id: '1', key: 'DATABASE_URL', value: 'postgresql://admin:********@db.nexus.io:5432/prod', scope: 'Production' },
-    { id: '2', key: 'STRIPE_SECRET', value: 'sk_live_51Mz...9s2l', scope: 'Production' },
-    { id: '3', key: 'STAGING_DB_URL', value: 'postgresql://dev:********@db.staging.io:5432/stage', scope: 'Staging' },
-    { id: '4', key: 'REDIS_PASSWORD', value: 'red_pass_123_abc', scope: 'Global' },
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([
+    '[02:14:01] SYSTEM: Nexus Forge Engine v4.2.0 initialized',
+    '[02:14:03] GIT: Connected to github.com/nexus-os/core',
+    '[02:14:05] PIPELINE: Triggered by commit 7f3a2d (Mohammed B.)',
+    '[02:14:07] STEP: Fetch Repository - COMPLETED',
+    '[02:14:10] STEP: Containerize Image - IN_PROGRESS',
+    ' > Step 4/12: RUN npm install --production',
+    ' > npm WARN deprecated rollup-plugin-terser@7.0.2',
+    ' > added 432 packages in 8s',
+    ' > Step 5/12: COPY . .',
+  ]);
+
+  const [isTriggering, setIsTriggering] = useState(false);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalLogs]);
+
+  const handleManualTrigger = () => {
+    setIsTriggering(true);
+    setTimeout(() => setIsTriggering(false), 2000);
+  };
+
+  const history = [
+    { id: 'h1', time: '12:45', duration: '2m 14s', status: 'success' },
+    { id: 'h2', time: '11:20', duration: '1m 58s', status: 'failed' },
+    { id: 'h3', time: '10:05', duration: '2m 05s', status: 'success' },
+    { id: 'h4', time: '09:30', duration: '2m 10s', status: 'success' },
+    { id: 'h5', time: '08:15', duration: '1m 45s', status: 'success' },
+    { id: 'h6', time: '07:00', duration: '2m 30s', status: 'failed' },
+    { id: 'h7', time: '05:45', duration: '2m 12s', status: 'success' },
+    { id: 'h8', time: '04:30', duration: '2m 08s', status: 'success' },
+    { id: 'h9', time: '03:15', duration: '1m 55s', status: 'success' },
+    { id: 'h10', time: '02:00', duration: '2m 02s', status: 'success' },
   ];
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden">
-      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar">
+    <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden relative">
+      {/* Top Action Bar */}
+      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar/30">
         <div className="flex items-center gap-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-brand-text/50">Git Ops</h2>
-          <div className="h-4 w-px bg-brand-border" />
-          <div className="flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
-            <Github size={12} />
-            <span>Connected to GitHub Organization</span>
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary border border-primary/20">
+            <GitBranch size={20} />
+          </div>
+          <div>
+            <h1 className="font-serif italic text-xl tracking-tight text-brand-text">Nexus Forge</h1>
+            <p className="text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">GitOps Pipeline Orchestrator</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 px-4 py-1.5 bg-brand-text/5 border border-brand-text/10 rounded-md">
-            <Webhook size={14} className={isAutoDeploy ? 'text-primary' : 'text-brand-text/20'} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text/60">Auto-Deploy</span>
-            <button 
-              onClick={() => setIsAutoDeploy(!isAutoDeploy)}
-              className={`w-8 h-4 rounded-full relative transition-all ${isAutoDeploy ? 'bg-primary' : 'bg-brand-sidebar'}`}
-            >
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isAutoDeploy ? 'left-4.5' : 'left-0.5'}`} />
-            </button>
+          <div className="flex items-center gap-3 px-4 py-2 bg-brand-bg border border-brand-border rounded-xl">
+            <GitBranch size={14} className="text-brand-text/40" />
+            <select className="bg-transparent text-xs font-bold text-brand-text outline-none cursor-pointer uppercase tracking-widest">
+              <option>main</option>
+              <option>production</option>
+              <option>staging</option>
+            </select>
           </div>
-          <button className="px-4 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold uppercase rounded hover:opacity-90 transition-colors flex items-center gap-2">
-            <RefreshCw size={14} />
-            Deploy Now
+          <button 
+            onClick={handleManualTrigger}
+            disabled={isTriggering}
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+          >
+            {isTriggering ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+            Manual Trigger
           </button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Repo Sidebar */}
-        <div className="w-80 border-r border-brand-border bg-brand-sidebar flex flex-col">
-          <div className="p-6 border-b border-brand-border">
-            <h3 className="text-[10px] uppercase tracking-widest font-bold text-brand-text/40 mb-4">Repositories</h3>
-            <div className="space-y-3">
-              {repos.map((repo) => (
-                <div 
-                  key={repo.id}
-                  onClick={() => setActiveRepo(repo)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer group ${
-                    activeRepo.id === repo.id 
-                      ? 'bg-primary/5 border-primary/30 shadow-[0_0_15px_var(--primary)]' 
-                      : 'bg-brand-text/2 border-brand-text/5 hover:border-brand-text/10'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                      <Github size={16} className={activeRepo.id === repo.id ? 'text-primary' : 'text-brand-text/40'} />
-                      <span className="text-xs font-bold text-brand-text">{repo.name}</span>
-                    </div>
-                    {repo.status === 'success' ? <CheckCircle2 size={14} className="text-primary" /> :
-                     repo.status === 'failed' ? <XCircle size={14} className="text-red-500" /> :
-                     <RefreshCw size={14} className="text-blue-400 animate-spin" />}
+        {/* Pipeline Canvas Area */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-brand-bg/50">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar p-8">
+            <div className="flex gap-8 h-full items-start">
+              {columns.map((column) => (
+                <div key={column.id} className="w-80 shrink-0 flex flex-col h-full max-h-full">
+                  <div className="flex items-center justify-between px-2 mb-3 shrink-0">
+                    <h3 className="text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">{column.title}</h3>
+                    <button className="p-1 hover:bg-brand-text/5 rounded text-brand-text/20 hover:text-brand-text transition-all">
+                      <Plus size={14} />
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-mono">
-                    <div className="flex items-center gap-1.5 text-brand-text/40">
-                      <GitBranch size={10} />
-                      {repo.branch}
+                  
+                  <div className="flex-1 bg-brand-sidebar/20 border border-brand-border rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                      <Reorder.Group axis="y" values={column.blocks} onReorder={(newBlocks) => {
+                        const newColumns = columns.map(col => col.id === column.id ? { ...col, blocks: newBlocks } : col);
+                        setColumns(newColumns);
+                      }} className="space-y-3">
+                        {column.blocks.map((block) => (
+                          <Reorder.Item 
+                            key={block.id} 
+                            value={block}
+                            className="bg-brand-sidebar border border-brand-border rounded-xl p-4 flex items-center justify-between group cursor-grab active:cursor-grabbing hover:border-primary/30 transition-all shadow-sm"
+                          >
+                            <div className="flex items-center gap-3">
+                              <GripVertical size={14} className="text-brand-text/10 group-hover:text-brand-text/30" />
+                              <div className="p-2 bg-brand-bg rounded-lg text-brand-text/40">
+                                {block.icon}
+                              </div>
+                              <span className="text-xs font-bold text-brand-text truncate max-w-[140px]">{block.name}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 shrink-0">
+                              {block.status === 'running' && <Loader2 size={14} className="text-blue-500 animate-spin" />}
+                              {block.status === 'success' && <CheckCircle2 size={14} className="text-emerald-500" />}
+                              {block.status === 'failed' && <XCircle size={14} className="text-red-500" />}
+                              {block.status === 'idle' && <div className="w-3.5 h-3.5 rounded-full border border-brand-text/10" />}
+                            </div>
+                          </Reorder.Item>
+                        ))}
+                      </Reorder.Group>
                     </div>
-                    <div className="text-brand-text/20">#{repo.commit}</div>
+                    
+                    <button className="w-full py-3 border border-dashed border-brand-border rounded-xl text-[10px] font-bold uppercase text-brand-text/20 hover:border-primary/30 hover:text-primary transition-all shrink-0 mt-auto">
+                      + Add Action
+                    </button>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Live Runner Terminal */}
+          <div className="h-72 bg-brand-sidebar border-t border-brand-border flex flex-col">
+            <div className="px-6 py-3 border-b border-brand-border flex items-center justify-between bg-brand-bg/50">
+              <div className="flex items-center gap-3">
+                <Terminal size={14} className="text-primary" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-brand-text/40">Live Runner Terminal</h3>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[9px] font-mono text-brand-text/20 uppercase">Streaming stdout</span>
+                </div>
+                <button 
+                  onClick={() => setTerminalLogs([])}
+                  className="text-[9px] font-bold text-brand-text/20 hover:text-brand-text uppercase"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar leading-relaxed bg-black/5">
+              {terminalLogs.map((log, idx) => (
+                <div key={idx} className="text-brand-text/60 mb-1">
+                  {log.includes('SUCCESS') || log.includes('COMPLETED') ? <span className="text-emerald-500">{log}</span> :
+                   log.includes('RUNNING') || log.includes('IN_PROGRESS') ? <span className="text-blue-500 font-bold">{log}</span> :
+                   log.includes('SYSTEM') ? <span className="text-primary font-bold">{log}</span> :
+                   log.includes('GIT') ? <span className="text-amber-500">{log}</span> :
+                   log.includes('PIPELINE') ? <span className="text-purple-500">{log}</span> :
+                   log.includes('STEP') ? <span className="text-brand-text/80 font-bold">{log}</span> :
+                   <span className="text-brand-text/30">{log}</span>}
+                </div>
+              ))}
+              <div className="animate-pulse inline-block w-2 h-4 bg-primary ml-1" />
+              <div ref={terminalEndRef} />
+            </div>
+          </div>
+        </div>
+
+        {/* Pipeline History Sidebar */}
+        <aside className="w-80 border-l border-brand-border bg-brand-sidebar flex flex-col shrink-0">
+          <div className="p-6 border-b border-brand-border shrink-0">
+            <div className="flex items-center gap-2">
+              <History size={16} className="text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Pipeline History</h3>
             </div>
           </div>
           
-          <div className="p-6">
-            <h3 className="text-[10px] uppercase tracking-widest font-bold text-brand-text/40 mb-4">Deployment History</h3>
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex gap-3 relative">
-                  {i !== 3 && <div className="absolute left-1.5 top-4 bottom-0 w-px bg-brand-border" />}
-                  <div className="w-3 h-3 rounded-full bg-brand-border border-2 border-brand-bg z-10 mt-1" />
-                  <div>
-                    <div className="text-[10px] font-bold text-brand-text/60">Production Deploy</div>
-                    <div className="text-[9px] text-brand-text/30 font-mono">2026-02-26 12:00 • Success</div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+            {history.map((run) => (
+              <div key={run.id} className="p-4 bg-brand-bg/50 border border-brand-border rounded-xl group hover:border-primary/30 transition-all cursor-pointer">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${run.status === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    <span className="text-xs font-bold text-brand-text uppercase tracking-wider">Run #{run.id.slice(1)}</span>
                   </div>
+                  <span className="text-[10px] font-mono text-brand-text/30">{run.time}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Sub-navigation */}
-          <div className="h-12 border-b border-brand-border bg-brand-sidebar flex items-center px-8 gap-8">
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className={`text-[10px] font-bold uppercase tracking-widest transition-all relative py-4 ${activeTab === 'overview' ? 'text-primary' : 'text-brand-text/40 hover:text-brand-text'}`}
-            >
-              Overview
-              {activeTab === 'overview' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-            </button>
-            <button 
-              onClick={() => setActiveTab('workspace')}
-              className={`text-[10px] font-bold uppercase tracking-widest transition-all relative py-4 ${activeTab === 'workspace' ? 'text-primary' : 'text-brand-text/40 hover:text-brand-text'}`}
-            >
-              Workspace
-              {activeTab === 'workspace' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-            </button>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              className={`text-[10px] font-bold uppercase tracking-widest transition-all relative py-4 ${activeTab === 'settings' ? 'text-primary' : 'text-brand-text/40 hover:text-brand-text'}`}
-            >
-              Settings
-              {activeTab === 'settings' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {activeTab === 'overview' && (
-              <div className="p-8 space-y-8">
-                {/* Active Repo Stats */}
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="bg-brand-sidebar border border-brand-border rounded-xl p-6">
-                    <div className="text-[10px] uppercase font-bold text-brand-text/30 mb-2">Current Branch</div>
-                    <div className="flex items-center gap-2">
-                      <GitBranch size={16} className="text-blue-400" />
-                      <span className="text-lg font-mono font-bold text-brand-text">{activeRepo.branch}</span>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
+                    <Clock size={10} />
+                    {run.duration}
                   </div>
-                  <div className="bg-brand-sidebar border border-brand-border rounded-xl p-6">
-                    <div className="text-[10px] uppercase font-bold text-brand-text/30 mb-2">Last Commit</div>
-                    <div className="flex items-center gap-2">
-                      <Terminal size={16} className="text-primary" />
-                      <span className="text-lg font-mono font-bold text-brand-text">{activeRepo.commit}</span>
-                    </div>
-                  </div>
-                  <div className="bg-brand-sidebar border border-brand-border rounded-xl p-6">
-                    <div className="text-[10px] uppercase font-bold text-brand-text/30 mb-2">Deployment URL</div>
-                    <div className="flex items-center gap-2">
-                      <Globe size={16} className="text-purple-400" />
-                      <span className="text-sm font-mono font-bold truncate text-brand-text">{activeRepo.url}</span>
-                      <ExternalLink size={12} className="text-brand-text/30 cursor-pointer hover:text-brand-text" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Environment Variables */}
-                <div className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden">
-                  <div className="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-text/5">
-                    <div className="flex items-center gap-2">
-                      <Shield size={16} className="text-primary" />
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Environment Variables</h3>
-                    </div>
-                    <button className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Add Variable</button>
-                  </div>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-brand-border bg-brand-text/2">
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">Key</th>
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">Value</th>
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">Scope</th>
-                        <th className="px-6 py-4"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-xs font-mono">
-                      {envVars.map((env) => (
-                        <tr key={env.id} className="border-b border-brand-border/50 hover:bg-brand-text/5 transition-colors group">
-                          <td className="px-6 py-4 text-brand-text font-bold">{env.key}</td>
-                          <td className="px-6 py-4">
-                            <div 
-                              className="flex items-center gap-2 cursor-help"
-                              onMouseEnter={() => setRevealEnv(env.id)}
-                              onMouseLeave={() => setRevealEnv(null)}
-                            >
-                              <span className={`transition-all duration-300 text-brand-text ${revealEnv === env.id ? 'opacity-100' : 'opacity-20 blur-sm'}`}>
-                                {env.value}
-                              </span>
-                              {revealEnv === env.id ? <EyeOff size={12} className="text-brand-text/30" /> : <Eye size={12} className="text-brand-text/30" />}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                              env.scope === 'Production' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                              env.scope === 'Staging' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                              'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                            }`}>
-                              {env.scope}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button className="p-1 hover:bg-brand-text/10 rounded opacity-0 group-hover:opacity-100 transition-all">
-                              <Settings size={14} className="text-brand-text/40" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Deployment Logs */}
-                <div className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden flex flex-col h-80">
-                  <div className="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-text/5">
-                    <div className="flex items-center gap-2">
-                      <Terminal size={16} className="text-primary" />
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Deployment Logs: {activeRepo.name}</h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[9px] font-mono text-brand-text/40 uppercase">Streaming</span>
-                      </div>
-                      <button className="text-[10px] font-bold text-brand-text/40 hover:text-brand-text uppercase">Clear</button>
-                    </div>
-                  </div>
-                  <div className="flex-1 bg-black/60 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar leading-relaxed">
-                    <div className="text-white/40 mb-1">[14:57:01] <span className="text-blue-400">INFO</span>: Fetching repository metadata...</div>
-                    <div className="text-white/40 mb-1">[14:57:03] <span className="text-blue-400">INFO</span>: Pulling branch <span className="text-white font-bold">{activeRepo.branch}</span></div>
-                    <div className="text-white/40 mb-1">[14:57:05] <span className="text-blue-400">INFO</span>: Found commit <span className="text-primary">{activeRepo.commit}</span></div>
-                    <div className="text-white/40 mb-1">[14:57:08] <span className="text-purple-400">STEP</span>: Running docker build...</div>
-                    <div className="text-white/20 mb-1">Step 1/12 : FROM node:18-alpine</div>
-                    <div className="text-white/20 mb-1">Step 2/12 : WORKDIR /app</div>
-                    <div className="text-white/20 mb-1">Step 3/12 : COPY package*.json ./</div>
-                    <div className="text-white/20 mb-1">Step 4/12 : RUN npm install --production</div>
-                    <div className="text-white/40 mb-1">[14:57:15] <span className="text-amber-400">WARN</span>: 12 vulnerabilities found in dependencies</div>
-                    <div className="text-white/20 mb-1">Step 5/12 : COPY . .</div>
-                    <div className="text-white/20 mb-1">Step 6/12 : RUN npm run build</div>
-                    <div className="text-white/40 mb-1">[14:57:22] <span className="text-primary">SUCCESS</span>: Build completed in 14.2s</div>
-                    <div className="text-white/40 mb-1">[14:57:24] <span className="text-blue-400">INFO</span>: Pushing image to registry...</div>
-                    <div className="animate-pulse inline-block w-2 h-4 bg-primary ml-1" />
-                  </div>
+                  <ChevronRight size={14} className="text-brand-text/20 group-hover:text-primary transition-colors" />
                 </div>
               </div>
-            )}
-
-            {activeTab === 'workspace' && (
-              <GitWorkspaceView folderName={activeRepo.name} />
-            )}
-
-            {activeTab === 'settings' && (
-              <div className="p-8">
-                <div className="bg-brand-sidebar border border-brand-border rounded-xl p-8 max-w-2xl">
-                  <h3 className="text-sm font-bold text-brand-text mb-6 uppercase tracking-widest">Repository Settings</h3>
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-brand-text/40 tracking-widest">Build Command</label>
-                      <input type="text" defaultValue="npm run build" className="w-full bg-brand-text/5 border border-brand-border rounded-lg px-4 py-2.5 text-xs font-mono text-brand-text outline-none focus:border-primary/50" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-brand-text/40 tracking-widest">Output Directory</label>
-                      <input type="text" defaultValue="dist" className="w-full bg-brand-text/5 border border-brand-border rounded-lg px-4 py-2.5 text-xs font-mono text-brand-text outline-none focus:border-primary/50" />
-                    </div>
-                    <div className="pt-4 border-t border-brand-border flex justify-end">
-                      <button className="px-6 py-2 bg-primary text-primary-foreground text-[10px] font-bold uppercase rounded-lg hover:opacity-90 transition-all">Save Settings</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
-        </div>
+          
+          <div className="p-6 border-t border-brand-border shrink-0">
+            <button className="w-full py-3 bg-brand-bg border border-brand-border rounded-xl text-[10px] font-bold uppercase text-brand-text/40 hover:text-brand-text transition-all flex items-center justify-center gap-2">
+              <Settings size={14} />
+              Runner Settings
+            </button>
+          </div>
+        </aside>
       </div>
     </div>
   );

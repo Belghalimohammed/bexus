@@ -15,14 +15,22 @@
 }
 
 :root {
-  --primary: #00FF00;
-  --primary-foreground: #000000;
-  --bg: #050505;
-  --sidebar: #0a0a0a;
-  --border: #1e293b;
-  --text: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.4);
-  --accent: #00FF00;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --bg: #ffffff;
+  --sidebar: #f1f5f9;
+  --border: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: rgba(15, 23, 42, 0.5);
+  --accent: #2563eb;
+}
+
+.light-mode {
+  --bg: #ffffff;
+  --sidebar: #f1f5f9;
+  --border: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: rgba(15, 23, 42, 0.5);
 }
 
 body {

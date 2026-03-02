@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Layout, Image as ImageIcon, Check, Upload, RefreshCw, Moon, Zap, Building2 } from 'lucide-react';
+import { Palette, Layout, Image as ImageIcon, Check, Upload, RefreshCw, Moon, Zap, Building2, Sun, Compass, Droplets, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ThemePreset {
@@ -16,6 +16,18 @@ interface ThemePreset {
 }
 
 const presets: ThemePreset[] = [
+  {
+    id: 'nexus',
+    name: 'Nexus Light',
+    primary: '#2563eb',
+    foreground: '#ffffff',
+    bg: '#ffffff',
+    sidebar: '#f1f5f9',
+    border: '#cbd5e1',
+    text: '#0f172a',
+    muted: 'rgba(15, 23, 42, 0.5)',
+    icon: <Sun size={16} />
+  },
   {
     id: 'midnight',
     name: 'Midnight',
@@ -41,28 +53,64 @@ const presets: ThemePreset[] = [
     icon: <Zap size={16} />
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    primary: '#2563eb',
+    id: 'solarized',
+    name: 'Solarized',
+    primary: '#b58900',
     foreground: '#ffffff',
-    bg: '#ffffff',
-    sidebar: '#f1f5f9',
-    border: '#cbd5e1',
-    text: '#0f172a',
-    muted: 'rgba(15, 23, 42, 0.5)',
-    icon: <Building2 size={16} />
+    bg: '#fdf6e3',
+    sidebar: '#eee8d5',
+    border: '#93a1a1',
+    text: '#073642',
+    muted: 'rgba(7, 54, 66, 0.5)',
+    icon: <Compass size={16} />
   },
   {
-    id: 'nexus',
-    name: 'Nexus Default',
-    primary: '#00FF00',
-    foreground: '#000000',
-    bg: '#050505',
-    sidebar: '#0a0a0a',
-    border: '#1e293b',
-    text: '#ffffff',
-    muted: 'rgba(255, 255, 255, 0.4)',
+    id: 'nordic',
+    name: 'Nordic',
+    primary: '#88c0d0',
+    foreground: '#2e3440',
+    bg: '#2e3440',
+    sidebar: '#3b4252',
+    border: '#4c566a',
+    text: '#eceff4',
+    muted: 'rgba(236, 239, 244, 0.4)',
+    icon: <Droplets size={16} />
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    primary: '#10b981',
+    foreground: '#ffffff',
+    bg: '#064e3b',
+    sidebar: '#065f46',
+    border: '#047857',
+    text: '#ecfdf5',
+    muted: 'rgba(236, 253, 245, 0.4)',
     icon: <RefreshCw size={16} />
+  },
+  {
+    id: 'crimson',
+    name: 'Crimson',
+    primary: '#ef4444',
+    foreground: '#ffffff',
+    bg: '#450a0a',
+    sidebar: '#7f1d1d',
+    border: '#991b1b',
+    text: '#fef2f2',
+    muted: 'rgba(254, 242, 242, 0.4)',
+    icon: <Flame size={16} />
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise Dark',
+    primary: '#2563eb',
+    foreground: '#ffffff',
+    bg: '#0f172a',
+    sidebar: '#1e293b',
+    border: '#334155',
+    text: '#f8fafc',
+    muted: 'rgba(248, 250, 252, 0.4)',
+    icon: <Building2 size={16} />
   }
 ];
 
@@ -72,7 +120,7 @@ const swatches = [
 
 export const ThemeManager: React.FC = () => {
   const [activePreset, setActivePreset] = useState('nexus');
-  const [primaryColor, setPrimaryColor] = useState('#00FF00');
+  const [primaryColor, setPrimaryColor] = useState('#2563eb');
   const [logo, setLogo] = useState<string | null>(null);
 
   const applyTheme = (theme: Partial<ThemePreset>) => {

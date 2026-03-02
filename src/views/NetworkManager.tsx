@@ -1,278 +1,370 @@
-import React, { useState } from 'react';
-import { Globe, Lock, Activity, ArrowRight, Shield, Search, ExternalLink, Clock, Server, Cpu } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Shield, 
+  Globe, 
+  Zap, 
+  ShieldAlert, 
+  Search, 
+  Filter, 
+  Activity, 
+  Lock, 
+  AlertTriangle, 
+  ChevronDown, 
+  Check, 
+  X, 
+  MousePointer2,
+  Bot,
+  ShieldCheck,
+  Flag
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Modal } from '../components/Modal';
-import { SubdomainWizard } from '../components/wizards/SubdomainWizard';
+
+interface ThreatPing {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+}
+
+interface TrafficLog {
+  id: string;
+  timestamp: string;
+  ip: string;
+  country: string;
+  countryCode: string;
+  rule: string;
+  action: 'blocked' | 'challenged' | 'allowed';
+  severity: 'high' | 'medium' | 'low';
+}
+
+const countries = [
+  { code: 'CN', name: 'China' },
+  { code: 'RU', name: 'Russia' },
+  { code: 'KP', name: 'North Korea' },
+  { code: 'IR', name: 'Iran' },
+  { code: 'UA', name: 'Ukraine' },
+  { code: 'US', name: 'United States' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'JP', name: 'Japan' },
+];
 
 export const NetworkManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'proxy' | 'ssl' | 'inspector'>('proxy');
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [pings, setPings] = useState<ThreatPing[]>([]);
+  const [blockedCountries, setBlockedCountries] = useState<string[]>(['CN', 'RU', 'KP']);
+  const [maxRequests, setMaxRequests] = useState(100);
+  const [timeWindow, setTimeWindow] = useState(60);
+  const [showCaptcha, setShowCaptcha] = useState(true);
+  const [blockMalicious, setBlockMalicious] = useState(true);
+  const [blockTor, setBlockTor] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(true);
+  const [logs, setLogs] = useState<TrafficLog[]>([
+    { id: '1', timestamp: '14:22:01', ip: '45.12.3.1', country: 'Russia', countryCode: 'RU', rule: 'SQL Injection Attempt', action: 'blocked', severity: 'high' },
+    { id: '2', timestamp: '14:22:05', ip: '103.4.12.88', country: 'China', countryCode: 'CN', rule: 'Geo-Blocked Region', action: 'blocked', severity: 'medium' },
+    { id: '3', timestamp: '14:22:12', ip: '192.168.1.45', country: 'USA', countryCode: 'US', rule: 'Rate Limit Exceeded', action: 'challenged', severity: 'low' },
+    { id: '4', timestamp: '14:22:18', ip: '5.188.62.144', country: 'Netherlands', countryCode: 'NL', rule: 'Known Malicious IP', action: 'blocked', severity: 'high' },
+  ]);
+
+  // Simulate real-time pings
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newPing: ThreatPing = {
+        id: Math.random().toString(),
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        color: Math.random() > 0.7 ? '#ef4444' : '#f59e0b',
+      };
+      setPings(prev => [...prev.slice(-10), newPing]);
+      
+      // Add a log entry occasionally
+      if (Math.random() > 0.8) {
+        const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+        const newLog: TrafficLog = {
+          id: Math.random().toString(),
+          timestamp: new Date().toLocaleTimeString([], { hour12: false }),
+          ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+          country: randomCountry.name,
+          countryCode: randomCountry.code,
+          rule: ['XSS Attack', 'Path Traversal', 'Bot Signature', 'Geo-Blocked'][Math.floor(Math.random() * 4)],
+          action: 'blocked',
+          severity: 'high'
+        };
+        setLogs(prev => [newLog, ...prev.slice(0, 9)]);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleCountry = (code: string) => {
+    setBlockedCountries(prev => 
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden">
-      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar">
+    <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden relative">
+      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar/30">
         <div className="flex items-center gap-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-brand-text/50">Traffic Controller</h2>
-          <div className="h-4 w-px bg-brand-border" />
-          <div className="flex items-center gap-1 bg-brand-text/5 p-1 rounded-lg">
-            {(['proxy', 'ssl', 'inspector'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${
-                  activeTab === tab ? 'bg-primary text-primary-foreground' : 'text-brand-text/40 hover:text-brand-text/60'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 border border-red-500/20">
+            <Shield size={20} />
+          </div>
+          <div>
+            <h1 className="font-serif italic text-xl tracking-tight text-brand-text">Aegis WAF</h1>
+            <p className="text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">Web Application Firewall & Threat Mitigation</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text/30" size={14} />
-            <input 
-              type="text" 
-              placeholder="Search network..."
-              className="bg-brand-text/5 border border-brand-text/10 rounded-md py-1.5 pl-9 pr-4 text-[11px] font-mono outline-none focus:border-primary/50 text-brand-text"
-            />
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-[10px] font-bold uppercase">
+            <ShieldCheck size={12} /> Protection Active
           </div>
-          <button 
-            onClick={() => setIsWizardOpen(true)}
-            className="px-4 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold uppercase rounded hover:opacity-90 transition-colors"
-          >
-            {activeTab === 'ssl' ? 'Issue Certificate' : 'Add Proxy Host'}
-          </button>
+          <div className="text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">
+            Ruleset: <span className="text-brand-text">v4.2.0-stable</span>
+          </div>
         </div>
       </header>
 
-      <Modal 
-        isOpen={isWizardOpen} 
-        onClose={() => setIsWizardOpen(false)} 
-        title="Subdomain Wizard"
-      >
-        <SubdomainWizard 
-          onClose={() => setIsWizardOpen(false)} 
-          onComplete={(data) => {
-            console.log('Wizard Complete:', data);
-            setIsWizardOpen(false);
-          }} 
-        />
-      </Modal>
-
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-        <div className="grid grid-cols-12 gap-8 max-w-7xl mx-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+        {/* Global Threat Map */}
+        <div className="bg-brand-sidebar border border-brand-border rounded-3xl p-8 relative overflow-hidden h-[400px]">
+          <div className="absolute top-6 left-8 z-10">
+            <h2 className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-1">Global Threat Map</h2>
+            <p className="text-[10px] font-mono text-brand-text/20 uppercase">Real-time Malicious Request Interception</p>
+          </div>
           
-          {/* Main Content Area based on Tab */}
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            <AnimatePresence mode="wait">
-              {activeTab === 'proxy' && (
-                <motion.div 
-                  key="proxy"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden"
-                >
-                  <div className="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-text/5">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Active Proxy Hosts</h3>
-                    <div className="flex gap-4 text-[10px] font-mono">
-                      <span className="text-primary">HTTP: 80</span>
-                      <span className="text-blue-400">HTTPS: 443</span>
-                    </div>
-                  </div>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-brand-border bg-brand-text/2">
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">Domain</th>
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">Target</th>
-                        <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-brand-text/40">SSL</th>
-                        <th className="px-6 py-4"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-xs font-mono">
-                      {[
-                        { domain: 'api.nexus.io', target: '10.0.1.42:3000', ssl: 'Active' },
-                        { domain: 'dashboard.nexus.io', target: '10.0.1.45:8080', ssl: 'Active' },
-                        { domain: 'auth.nexus.io', target: '10.0.2.10:5000', ssl: 'Active' },
-                        { domain: 'cdn.nexus.io', target: 'S3-Bucket-Proxy', ssl: 'Expiring' },
-                      ].map((host, i) => (
-                        <tr key={i} className="border-b border-brand-border/50 hover:bg-brand-text/5 transition-colors group">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-brand-text font-medium">{host.domain}</span>
-                              <ExternalLink size={10} className="text-brand-text/30 opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-brand-text/60">{host.target}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <Lock size={12} className={host.ssl === 'Expiring' ? 'text-red-500' : 'text-primary'} />
-                              <span className={host.ssl === 'Expiring' ? 'text-red-400' : 'text-primary'}>{host.ssl}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button className="px-3 py-1 bg-brand-text/5 border border-brand-text/10 rounded text-[9px] font-bold uppercase hover:bg-brand-text/10 text-brand-text">Manage</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </motion.div>
-              )}
-
-              {activeTab === 'ssl' && (
-                <motion.div 
-                  key="ssl"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden"
-                >
-                  <div className="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-text/5">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">SSL Certificates (Let's Encrypt)</h3>
-                    <div className="text-[10px] font-mono text-primary">Auto-renewal: Enabled</div>
-                  </div>
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      { domain: '*.nexus.io', provider: 'Let\'s Encrypt', expiry: 42, status: 'Healthy' },
-                      { domain: 'api.nexus.io', provider: 'Let\'s Encrypt', expiry: 12, status: 'Warning' },
-                      { domain: 'auth.nexus.io', provider: 'Let\'s Encrypt', expiry: 89, status: 'Healthy' },
-                      { domain: 'legacy.nexus.io', provider: 'ZeroSSL', expiry: 2, status: 'Critical' },
-                    ].map((cert, i) => (
-                      <div key={i} className="bg-brand-bg/40 border border-brand-text/5 rounded-lg p-4 flex flex-col gap-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="text-xs font-bold text-brand-text">{cert.domain}</div>
-                            <div className="text-[9px] text-brand-text/30 uppercase font-mono">{cert.provider}</div>
-                          </div>
-                          <Shield size={16} className={cert.status === 'Healthy' ? 'text-primary' : cert.status === 'Warning' ? 'text-yellow-500' : 'text-red-500'} />
-                        </div>
-                        <div className="flex items-end justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-brand-text/30 uppercase font-bold">Expires in</span>
-                            <span className={`text-lg font-mono font-bold ${cert.expiry < 7 ? 'text-red-500' : cert.expiry < 15 ? 'text-yellow-500' : 'text-brand-text'}`}>
-                              {cert.expiry} <span className="text-[10px] text-brand-text/40">Days</span>
-                            </span>
-                          </div>
-                          <button className="text-[9px] font-bold text-primary hover:underline uppercase tracking-wider">Renew Now</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'inspector' && (
-                <motion.div 
-                  key="inspector"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="bg-brand-sidebar border border-brand-border rounded-xl p-6"
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                      <Activity size={16} className="text-primary" />
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Traffic Inspector</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[9px] font-mono text-brand-text/40 uppercase">Real-time Stream</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { method: 'GET', path: '/api/v1/health', status: 200, latency: '4ms', time: '14:22:01' },
-                      { method: 'POST', path: '/api/v1/auth/login', status: 200, latency: '42ms', time: '14:22:03' },
-                      { method: 'GET', path: '/api/v1/metrics', status: 200, latency: '12ms', time: '14:22:05' },
-                      { method: 'GET', path: '/static/bundle.js', status: 304, latency: '2ms', time: '14:22:08' },
-                      { method: 'POST', path: '/api/v1/upload', status: 413, latency: '150ms', time: '14:22:12' },
-                    ].map((log, i) => (
-                      <div key={i} className="flex items-center justify-between text-[10px] font-mono bg-brand-text/2 p-2 rounded border border-brand-text/5">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-bold w-10 ${log.method === 'POST' ? 'text-blue-400' : 'text-primary'}`}>{log.method}</span>
-                          <span className="text-brand-text/60 truncate max-w-[200px]">{log.path}</span>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <span className={log.status >= 400 ? 'text-red-500' : 'text-primary'}>{log.status}</span>
-                          <span className="text-brand-text/30 w-12 text-right">{log.latency}</span>
-                          <span className="text-brand-text/20 w-16 text-right">{log.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="absolute top-6 right-8 z-10 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="text-[10px] font-bold text-red-400 uppercase">Critical Block</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <span className="text-[10px] font-bold text-amber-400 uppercase">Challenge Issued</span>
+            </div>
           </div>
 
-          {/* Side Panel: Visual Routing */}
-          <div className="col-span-12 lg:col-span-4 space-y-8">
-            <div className="bg-brand-sidebar border border-brand-border rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-8">
-                <Shield size={16} className="text-primary" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Visual Routing</h3>
+          {/* Stylized World Map SVG */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+            <svg viewBox="0 0 1000 500" className="w-full h-full text-brand-text fill-current">
+              <path d="M150,150 Q200,100 250,150 T350,150 T450,150 T550,150 T650,150 T750,150 T850,150" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2" />
+              {/* Simple representation of continents */}
+              <path d="M100,100 L200,100 L250,200 L200,300 L100,300 Z" /> {/* NA */}
+              <path d="M150,350 L250,350 L280,450 L200,480 L150,450 Z" /> {/* SA */}
+              <path d="M450,100 L600,100 L650,200 L600,300 L500,300 L450,200 Z" /> {/* Europe/Africa */}
+              <path d="M650,100 L900,100 L950,300 L800,450 L700,400 L650,200 Z" /> {/* Asia */}
+              <path d="M800,400 L850,400 L870,450 L820,450 Z" /> {/* Australia */}
+            </svg>
+          </div>
+
+          {/* Threat Pings */}
+          <AnimatePresence>
+            {pings.map(ping => (
+              <motion.div
+                key={ping.id}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                style={{ 
+                  position: 'absolute', 
+                  left: `${ping.x}%`, 
+                  top: `${ping.y}%`,
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  backgroundColor: ping.color,
+                  boxShadow: `0 0 20px ${ping.color}`
+                }}
+              />
+            ))}
+          </AnimatePresence>
+
+          <div className="absolute bottom-6 left-8 flex gap-8">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-brand-text/20 uppercase tracking-widest">Requests/Sec</span>
+              <span className="text-2xl font-serif italic text-brand-text">1,284</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-brand-text/20 uppercase tracking-widest">Blocks/Min</span>
+              <span className="text-2xl font-serif italic text-red-400">42</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-brand-text/20 uppercase tracking-widest">Avg Latency</span>
+              <span className="text-2xl font-serif italic text-emerald-400">14ms</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Configuration Bento Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Card 1: Geo-Blocking */}
+          <div className="bg-brand-sidebar border border-brand-border rounded-3xl p-6 flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <Globe size={18} className="text-blue-400" />
+              <h3 className="text-xs font-bold text-brand-text uppercase tracking-widest">Geo-Blocking</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <label className="text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Restricted Regions</label>
+              <div className="relative">
+                <div className="flex flex-wrap gap-2 p-3 bg-brand-bg border border-brand-border rounded-xl min-h-[100px]">
+                  {blockedCountries.map(code => (
+                    <div key={code} className="flex items-center gap-2 px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-[10px] font-bold text-red-400 uppercase">
+                      {code}
+                      <X size={10} className="cursor-pointer hover:text-red-300" onClick={() => toggleCountry(code)} />
+                    </div>
+                  ))}
+                  <button className="text-[10px] font-bold text-brand-text/20 hover:text-brand-text transition-colors">+ Add Country</button>
+                </div>
               </div>
-              <div className="flex flex-col items-center gap-4 py-4 relative">
-                {/* Public Internet */}
-                <div className="flex flex-col items-center gap-2 z-10">
-                  <div className="w-10 h-10 rounded-full bg-brand-sidebar border border-brand-border flex items-center justify-center text-brand-text/40">
-                    <Globe size={18} />
-                  </div>
-                  <span className="text-[8px] font-mono text-brand-text/40 uppercase">Public Internet</span>
-                </div>
-                
-                <div className="h-8 w-px bg-gradient-to-b from-primary to-transparent opacity-20" />
-                
-                {/* Port 443 */}
-                <div className="px-4 py-1.5 bg-primary/5 border border-primary/20 rounded text-[9px] font-mono text-primary z-10">
-                  Port 443 (SSL)
-                </div>
+              <p className="text-[9px] text-brand-text/30 leading-relaxed italic">Traffic from these regions will be dropped immediately at the edge.</p>
+            </div>
+          </div>
 
-                <div className="h-8 w-px bg-gradient-to-b from-transparent via-primary to-transparent opacity-20" />
-
-                {/* Nginx */}
-                <div className="px-6 py-3 bg-brand-sidebar border border-brand-border rounded-lg flex flex-col items-center gap-1 z-10 shadow-xl">
-                  <Server size={16} className="text-primary" />
-                  <span className="text-[10px] font-bold text-brand-text">Nginx Proxy</span>
+          {/* Card 2: Rate Limiting */}
+          <div className="bg-brand-sidebar border border-brand-border rounded-3xl p-6 flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <Zap size={18} className="text-amber-400" />
+              <h3 className="text-xs font-bold text-brand-text uppercase tracking-widest">Rate Limiting</h3>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Max Requests</label>
+                  <span className="text-[10px] font-mono text-amber-400">{maxRequests} reqs</span>
                 </div>
-
-                <div className="h-8 w-px bg-gradient-to-b from-transparent to-blue-500 opacity-20" />
-
-                {/* Containers */}
-                <div className="flex gap-4 z-10">
-                  <div className="px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded flex flex-col items-center">
-                    <Cpu size={12} className="text-blue-400 mb-1" />
-                    <span className="text-[9px] font-bold text-blue-400">API:3000</span>
-                  </div>
-                  <div className="px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded flex flex-col items-center">
-                    <Cpu size={12} className="text-purple-400 mb-1" />
-                    <span className="text-[9px] font-bold text-purple-400">Auth:5000</span>
-                  </div>
-                </div>
-
-                {/* Background Flow Animation */}
-                <div className="absolute inset-0 pointer-events-none flex justify-center">
-                  <div className="w-px h-full bg-brand-border opacity-20" />
-                </div>
+                <input 
+                  type="range" 
+                  min="10" max="1000" 
+                  value={maxRequests} 
+                  onChange={(e) => setMaxRequests(parseInt(e.target.value))}
+                  className="w-full accent-amber-500 h-1 bg-brand-bg rounded-lg appearance-none cursor-pointer"
+                />
               </div>
-              <div className="mt-8 pt-6 border-t border-brand-border">
-                <div className="text-[10px] text-brand-text/40 uppercase font-bold mb-4">Network Health</div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-mono text-brand-text/60">Request Rate</span>
-                    <span className="text-[10px] font-mono text-primary">1.2k/min</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-mono text-brand-text/60">Error Rate</span>
-                    <span className="text-[10px] font-mono text-brand-text">0.02%</span>
-                  </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Time Window</label>
+                  <span className="text-[10px] font-mono text-amber-400">{timeWindow}s</span>
                 </div>
+                <input 
+                  type="range" 
+                  min="1" max="300" 
+                  value={timeWindow} 
+                  onChange={(e) => setTimeWindow(parseInt(e.target.value))}
+                  className="w-full accent-amber-500 h-1 bg-brand-bg rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">Show CAPTCHA</span>
+                <button 
+                  onClick={() => setShowCaptcha(!showCaptcha)}
+                  className={`w-10 h-5 rounded-full relative transition-all ${showCaptcha ? 'bg-amber-500' : 'bg-brand-bg border border-brand-border'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${showCaptcha ? 'left-6' : 'left-1'}`} />
+                </button>
               </div>
             </div>
           </div>
 
+          {/* Card 3: Bot Mitigation */}
+          <div className="bg-brand-sidebar border border-brand-border rounded-3xl p-6 flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <Bot size={18} className="text-emerald-400" />
+              <h3 className="text-xs font-bold text-brand-text uppercase tracking-widest">Bot Mitigation</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {[
+                { label: 'Block Malicious IPs', active: blockMalicious, setter: setBlockMalicious, icon: ShieldAlert },
+                { label: 'Block Tor Exit Nodes', active: blockTor, setter: setBlockTor, icon: Lock },
+                { label: 'AI Behavioral Analysis', active: aiAnalysis, setter: setAiAnalysis, icon: Activity },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 bg-brand-bg/50 border border-brand-border rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <item.icon size={14} className={item.active ? 'text-emerald-400' : 'text-brand-text/20'} />
+                    <span className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">{item.label}</span>
+                  </div>
+                  <button 
+                    onClick={() => item.setter(!item.active)}
+                    className={`w-8 h-4 rounded-full relative transition-all ${item.active ? 'bg-emerald-500' : 'bg-brand-sidebar border border-brand-border'}`}
+                  >
+                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${item.active ? 'left-4.5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Traffic Log */}
+        <div className="bg-brand-sidebar border border-brand-border rounded-3xl overflow-hidden shadow-2xl">
+          <div className="p-6 border-b border-brand-border flex items-center justify-between bg-brand-bg/30">
+            <div className="flex items-center gap-3">
+              <Activity size={16} className="text-red-400" />
+              <h2 className="text-xs font-bold text-brand-text uppercase tracking-widest">Real-time Traffic Log</h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[9px] font-mono text-brand-text/40 uppercase">Monitoring Ingress</span>
+              </div>
+              <button className="p-2 hover:bg-brand-text/5 rounded-lg text-brand-text/30 hover:text-brand-text transition-all">
+                <Filter size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-brand-border bg-brand-bg/20">
+                  <th className="p-4 text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Timestamp</th>
+                  <th className="p-4 text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Attacker IP</th>
+                  <th className="p-4 text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">Origin</th>
+                  <th className="p-4 text-[10px] font-bold text-brand-text/40 uppercase tracking-widest">WAF Rule Triggered</th>
+                  <th className="p-4 text-[10px] font-bold text-brand-text/40 uppercase tracking-widest text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-border">
+                {logs.map((log) => (
+                  <tr key={log.id} className={`group transition-colors ${log.action === 'blocked' ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-brand-text/5'}`}>
+                    <td className="p-4">
+                      <span className="text-[10px] font-mono text-brand-text/40">{log.timestamp}</span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-xs font-mono font-bold ${log.action === 'blocked' ? 'text-red-400' : 'text-brand-text'}`}>{log.ip}</span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-3 bg-brand-text/10 rounded-sm flex items-center justify-center overflow-hidden">
+                          <span className="text-[8px] font-bold">{log.countryCode}</span>
+                        </div>
+                        <span className="text-xs text-brand-text/60">{log.country}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={12} className={log.severity === 'high' ? 'text-red-400' : 'text-amber-400'} />
+                        <span className="text-xs font-medium text-brand-text/80">{log.rule}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${
+                        log.action === 'blocked' ? 'bg-red-500/20 text-red-400' :
+                        log.action === 'challenged' ? 'bg-amber-500/20 text-amber-400' :
+                        'bg-emerald-500/20 text-emerald-400'
+                      }`}>
+                        {log.action}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

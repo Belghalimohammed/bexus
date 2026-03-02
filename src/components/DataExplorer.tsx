@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Database, Search, Download, Plus, Filter, MoreVertical, Play, Table as TableIcon, Eye, Zap, ChevronRight, ChevronDown } from 'lucide-react';
+import { Database, Search, Download, Plus, Filter, MoreVertical, Play, Table as TableIcon, Eye, Zap, ChevronRight, ChevronDown, Users } from 'lucide-react';
+import { usePresence } from '../contexts/PresenceContext';
 
 interface DataExplorerProps {
   containerName: string;
@@ -10,6 +11,9 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ containerName, image
   const [activeTable, setActiveTable] = useState('users');
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 100;');
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['tables']));
+  const { users } = usePresence();
+
+  const activeUsers = users.filter(u => u.location === 'db-spreadsheet');
 
   const toggleNode = (node: string) => {
     const next = new Set(expandedNodes);
@@ -157,11 +161,29 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ containerName, image
               <div className="h-4 w-px bg-brand-border" />
               <div className="text-[10px] text-brand-text/40 font-mono">5 rows found (0.02s)</div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Plus size={14} /></button>
-              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Filter size={14} /></button>
-              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Download size={14} /></button>
-              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><MoreVertical size={14} /></button>
+            <div className="flex items-center gap-4">
+              {/* Presence Avatars */}
+              <div className="flex -space-x-2">
+                {activeUsers.map(user => (
+                  <div 
+                    key={user.id}
+                    className="w-6 h-6 rounded-full border-2 border-brand-sidebar flex items-center justify-center text-[8px] font-bold text-white shadow-lg"
+                    style={{ backgroundColor: user.color }}
+                    title={`${user.name} is viewing this table`}
+                  >
+                    {user.name.charAt(0)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="h-4 w-px bg-brand-border" />
+
+              <div className="flex items-center gap-2">
+                <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Plus size={14} /></button>
+                <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Filter size={14} /></button>
+                <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Download size={14} /></button>
+                <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><MoreVertical size={14} /></button>
+              </div>
             </div>
           </div>
 

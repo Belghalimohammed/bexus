@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Folder, FileCode, ChevronRight, ChevronDown, Search, Download, Trash2, Upload, FileText, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Folder, FileCode, ChevronRight, ChevronDown, Search, Download, Trash2, Upload, FileText, MoreVertical, AlertTriangle, Save } from 'lucide-react';
+import { usePresence } from '../contexts/PresenceContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ContainerFileExplorerProps {
   containerName: string;
@@ -9,6 +11,11 @@ interface ContainerFileExplorerProps {
 export const ContainerFileExplorer: React.FC<ContainerFileExplorerProps> = ({ containerName, workdir = '/app' }) => {
   const [selectedFile, setSelectedFile] = useState<string | null>('index.js');
   const [isExpanded, setIsExpanded] = useState(true);
+  const [envContent, setEnvContent] = useState('DB_HOST=localhost\nDB_PORT=5432\nSTRIPE_KEY=sk_test_51Mz...');
+  const { users } = usePresence();
+
+  const activeUsers = users.filter(u => u.location === 'file-explorer' && u.activeFile === selectedFile);
+  const hasCollision = selectedFile === '.env' && activeUsers.length > 0;
 
   const files = [
     { name: 'src', type: 'folder', active: false, children: [
@@ -101,13 +108,75 @@ export const ContainerFileExplorer: React.FC<ContainerFileExplorerProps> = ({ co
             <FileText size={14} className="text-primary" />
             <div className="text-[11px] font-bold text-brand-text">{selectedFile || 'Select a file'}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Download size={14} /></button>
-            <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Trash2 size={14} className="text-red-500/60" /></button>
-            <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><MoreVertical size={14} /></button>
+          
+          <div className="flex items-center gap-4">
+            {/* Presence Avatars */}
+            <div className="flex -space-x-2">
+              {activeUsers.map(user => (
+                <div 
+                  key={user.id}
+                  className="w-6 h-6 rounded-full border-2 border-brand-sidebar flex items-center justify-center text-[8px] font-bold text-white shadow-lg"
+                  style={{ backgroundColor: user.color }}
+                  title={`${user.name} is viewing this file`}
+                >
+                  {user.name.charAt(0)}
+                </div>
+              ))}
+            </div>
+
+            <div className="h-4 w-px bg-brand-border" />
+
+            <div className="flex items-center gap-3">
+              {selectedFile === '.env' && (
+                <button 
+                  disabled={hasCollision}
+                  className={`flex items-center gap-2 px-3 py-1 rounded text-[10px] font-bold uppercase transition-all ${
+                    hasCollision 
+                      ? 'bg-red-500/10 text-red-500 border border-red-500/20 cursor-not-allowed' 
+                      : 'bg-primary text-primary-foreground hover:opacity-90'
+                  }`}
+                >
+                  <Save size={12} />
+                  Save Changes
+                </button>
+              )}
+              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Download size={14} /></button>
+              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><Trash2 size={14} className="text-red-500/60" /></button>
+              <button className="p-1.5 hover:bg-brand-text/5 rounded text-brand-text/40 hover:text-brand-text transition-all"><MoreVertical size={14} /></button>
+            </div>
           </div>
         </header>
-        <div className="flex-1 bg-brand-bg p-4 font-mono text-[11px] overflow-auto custom-scrollbar leading-relaxed">
+
+        {hasCollision && (
+          <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-2 flex items-center gap-3">
+            <AlertTriangle size={14} className="text-red-500" />
+            <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">
+              Collision Warning: {activeUsers[0].name} is currently editing this file. Save locked.
+            </span>
+          </div>
+        )}
+
+        <div className="flex-1 bg-brand-bg p-4 font-mono text-[11px] overflow-auto custom-scrollbar leading-relaxed relative">
+          {selectedFile === '.env' && activeUsers.length > 0 && (
+            <div 
+              className="absolute pointer-events-none border-l-2 z-10"
+              style={{ 
+                left: '100px', 
+                top: '40px', 
+                height: '1.5em', 
+                borderColor: activeUsers[0].color,
+                backgroundColor: `${activeUsers[0].color}22`
+              }}
+            >
+              <div 
+                className="absolute -top-4 left-0 px-1 py-0.5 rounded text-[8px] text-white whitespace-nowrap"
+                style={{ backgroundColor: activeUsers[0].color }}
+              >
+                {activeUsers[0].name}
+              </div>
+            </div>
+          )}
+
           <div className="text-brand-text/80">
             {selectedFile === 'index.js' ? (
               <pre>
@@ -123,6 +192,13 @@ app.listen(port, () => {
   console.log(\`Example app listening at http://localhost:\${port}\`);
 });`}
               </pre>
+            ) : selectedFile === '.env' ? (
+              <textarea 
+                value={envContent}
+                onChange={(e) => setEnvContent(e.target.value)}
+                className="w-full h-full bg-transparent outline-none resize-none"
+                spellCheck={false}
+              />
             ) : (
               <div className="text-brand-text/40 italic">Binary file or large content hidden in preview.</div>
             )}

@@ -2,7 +2,8 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Canvas } from '../components/Canvas';
 import { WidgetInstance, WidgetType, Page } from '../types';
-import { Plus, FileText, Trash2 } from 'lucide-react';
+import { Plus, FileText, Trash2, Box, Layout } from 'lucide-react';
+import { Matrix3D } from '../components/Matrix3D';
 
 export const InfinityCanvas: React.FC = () => {
   const [pages, setPages] = useState<Page[]>([
@@ -17,6 +18,7 @@ export const InfinityCanvas: React.FC = () => {
     }
   ]);
   const [activePageId, setActivePageId] = useState<string>('default');
+  const [is3DMode, setIs3DMode] = useState(false);
 
   const activePage = useMemo(() => 
     pages.find(p => p.id === activePageId) || pages[0],
@@ -149,20 +151,42 @@ export const InfinityCanvas: React.FC = () => {
               Live System Active
             </div>
           </div>
-          <div className="flex items-center gap-6 text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">
-            <span>Lat: 37.7749° N</span>
-            <span>Lon: 122.4194° W</span>
-            <span className="text-brand-text opacity-100">{new Date().toLocaleTimeString()}</span>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setIs3DMode(!is3DMode)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                is3DMode 
+                  ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                  : 'bg-brand-sidebar border-brand-border text-brand-text/60 hover:text-brand-text hover:border-brand-text/20'
+              }`}
+            >
+              {is3DMode ? <Box size={16} /> : <Layout size={16} />}
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                {is3DMode ? '3D Matrix Active' : 'Enable 3D Matrix'}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-6 text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">
+              <span>Lat: 37.7749° N</span>
+              <span>Lon: 122.4194° W</span>
+              <span className="text-brand-text opacity-100">{new Date().toLocaleTimeString()}</span>
+            </div>
           </div>
         </header>
 
-        {/* Canvas */}
-        <Canvas 
-          key={activePageId} 
-          widgets={activePage.widgets} 
-          onLayoutChange={handleLayoutChange}
-          onRemoveWidget={removeWidget}
-        />
+        {/* Canvas or 3D Matrix */}
+        <div className="flex-1 relative">
+          {is3DMode ? (
+            <Matrix3D />
+          ) : (
+            <Canvas 
+              key={activePageId} 
+              widgets={activePage.widgets} 
+              onLayoutChange={handleLayoutChange}
+              onRemoveWidget={removeWidget}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
