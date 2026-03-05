@@ -98,7 +98,7 @@ export const InfinityCanvas: React.FC = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Pages & Widgets Sidebar */}
-      <div className="w-72 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0">
+      <div className="hidden md:flex w-72 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0">
         <div className="p-4 border-b border-slate-200 bg-white">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Canvas Pages</h2>
@@ -147,38 +147,37 @@ export const InfinityCanvas: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col bg-slate-100">
         {/* Header */}
-        <header className="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white z-10">
+        <header className="h-16 border-b border-slate-200 flex items-center justify-between px-4 md:px-8 bg-white z-10 shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
-              <h1 className="font-serif italic text-xl tracking-tight text-slate-900">BEXUS Infinity Canvas</h1>
-              <span className="text-[10px] font-mono text-primary font-bold uppercase tracking-tighter">
-                Active: {activePage.name}
+              <h1 className="font-serif italic text-lg md:text-xl tracking-tight text-slate-900">Infinity Canvas</h1>
+              <span className="text-[9px] md:text-[10px] font-mono text-primary font-bold uppercase tracking-tighter">
+                {activePage.name}
               </span>
             </div>
-            <div className="flex items-center gap-2 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded text-emerald-600 text-[10px] font-bold uppercase">
+            <div className="hidden md:flex items-center gap-2 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded text-emerald-600 text-[10px] font-bold uppercase">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live System Active
+              Live
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             <button 
               onClick={() => setIs3DMode(!is3DMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl border transition-all ${
                 is3DMode 
                   ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
                   : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm'
               }`}
             >
               {is3DMode ? <Box size={16} /> : <Layout size={16} />}
-              <span className="text-[10px] font-bold uppercase tracking-widest">
+              <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">
                 {is3DMode ? '3D Matrix Active' : 'Enable 3D Matrix'}
               </span>
             </button>
 
-            <div className="flex items-center gap-6 text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">
-              <span>Lat: 37.7749° N</span>
-              <span>Lon: 122.4194° W</span>
-              <span className="text-slate-900 opacity-100">{new Date().toLocaleTimeString()}</span>
+            <div className="hidden md:flex items-center gap-6 text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">
+              <span>37.77° N</span>
+              <span>122.41° W</span>
             </div>
           </div>
         </header>
@@ -193,6 +192,8 @@ export const InfinityCanvas: React.FC = () => {
               widgets={activePage.widgets} 
               onLayoutChange={handleLayoutChange}
               onRemoveWidget={removeWidget}
+              isDraggable={window.innerWidth > 768}
+              isResizable={window.innerWidth > 768}
               onDrop={(type, x, y) => {
                 const id = Math.random().toString(36).substr(2, 9);
                 updateActivePageWidgets(prev => {

@@ -22,6 +22,12 @@ import { NOCMode } from './views/NOCMode';
 import { FinOpsManager } from './views/FinOpsManager';
 import { CredentialsManager } from './views/CredentialsManager';
 import ProfileManager from './views/ProfileManager';
+import { TeamWorkspace } from './views/team/TeamWorkspace';
+import { NexusComms } from './views/team/NexusComms';
+import { Crucible } from './views/observability/Crucible';
+import { SparkFunctions } from './views/compute/SparkFunctions';
+import { ContextualNotes } from './components/ContextualNotes';
+import { GlobalQuickChat } from './components/GlobalQuickChat';
 import { PresenceProvider } from './contexts/PresenceContext';
 import { TourProvider, useTour } from './contexts/TourContext';
 import { TourOverlay } from './components/TourOverlay';
@@ -35,6 +41,8 @@ import {
   Settings, 
   Bell, 
   User,
+  Users,
+  MessageSquare,
   Menu,
   ChevronLeft,
   Zap as ZapIcon,
@@ -48,10 +56,15 @@ import {
   Activity,
   Monitor,
   TrendingDown,
-  Compass
+  Compass,
+  Skull,
+  X,
+  Container,
+  MessageCircle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-type ViewType = 'dashboard' | 'canvas' | 'iam' | 'orchestrator' | 'networking' | 'vault' | 'warp' | 'gitops' | 'tunnels' | 'ghost' | 'aidoctor' | 'blueprints' | 'chronos' | 'mesh' | 'audit' | 'apm' | 'hypervisor' | 'noc' | 'finops' | 'theme' | 'settings' | 'credentials' | 'notifications' | 'profile';
+type ViewType = 'dashboard' | 'canvas' | 'iam' | 'orchestrator' | 'networking' | 'vault' | 'warp' | 'gitops' | 'tunnels' | 'ghost' | 'aidoctor' | 'blueprints' | 'chronos' | 'mesh' | 'audit' | 'apm' | 'hypervisor' | 'noc' | 'finops' | 'theme' | 'settings' | 'credentials' | 'notifications' | 'profile' | 'workspace' | 'messages' | 'crucible' | 'spark';
 
 const NavItem: React.FC<{ 
   view: ViewType; 
@@ -89,6 +102,7 @@ const NavItem: React.FC<{
 const AppWrapper: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { startTour } = useTour();
 
   useEffect(() => {
@@ -123,6 +137,10 @@ const AppWrapper: React.FC = () => {
       case 'settings': return <SettingsManager />;
       case 'credentials': return <CredentialsManager />;
       case 'profile': return <ProfileManager />;
+      case 'workspace': return <TeamWorkspace />;
+      case 'messages': return <NexusComms />;
+      case 'crucible': return <Crucible />;
+      case 'spark': return <SparkFunctions />;
       case 'theme': return <ThemeManager />;
       default: return (
         <div className="flex-1 flex flex-col bg-brand-bg">
@@ -195,6 +213,8 @@ const AppWrapper: React.FC = () => {
           {/* Scrollable Navigation Area */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar py-4 px-2 space-y-1">
             <NavItem id="nav-dashboard" view="dashboard" activeView={activeView} setActiveView={setActiveView} icon={<LayoutDashboard size={18} />} label="Dashboard" isMenuOpen={isMenuOpen} />
+            <NavItem id="nav-workspace" view="workspace" activeView={activeView} setActiveView={setActiveView} icon={<Users size={18} />} label="Team Ops" isMenuOpen={isMenuOpen} />
+            <NavItem id="nav-messages" view="messages" activeView={activeView} setActiveView={setActiveView} icon={<MessageSquare size={18} />} label="Nexus Comms" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-canvas" view="canvas" activeView={activeView} setActiveView={setActiveView} icon={<Layers size={18} />} label="Infinity Canvas" isMenuOpen={isMenuOpen} />
             
             <div className="py-2">
@@ -222,6 +242,8 @@ const AppWrapper: React.FC = () => {
             <NavItem id="nav-mesh" view="mesh" activeView={activeView} setActiveView={setActiveView} icon={<Network size={18} />} label="Mesh" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-audit" view="audit" activeView={activeView} setActiveView={setActiveView} icon={<ShieldAlert size={18} />} label="Audit Blackbox" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-apm" view="apm" activeView={activeView} setActiveView={setActiveView} icon={<Activity size={18} />} label="Deep Trace APM" isMenuOpen={isMenuOpen} />
+            <NavItem id="nav-crucible" view="crucible" activeView={activeView} setActiveView={setActiveView} icon={<Skull size={18} />} label="The Crucible" isMenuOpen={isMenuOpen} />
+            <NavItem id="nav-spark" view="spark" activeView={activeView} setActiveView={setActiveView} icon={<ZapIcon size={18} />} label="The Spark" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-hypervisor" view="hypervisor" activeView={activeView} setActiveView={setActiveView} icon={<Monitor size={18} />} label="Hypervisor VM" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-noc" view="noc" activeView={activeView} setActiveView={setActiveView} icon={<ZapIcon size={18} />} label="NOC Mode" isMenuOpen={isMenuOpen} />
             <NavItem id="nav-finops" view="finops" activeView={activeView} setActiveView={setActiveView} icon={<TrendingDown size={18} />} label="FinOps" isMenuOpen={isMenuOpen} />
@@ -290,6 +312,134 @@ const AppWrapper: React.FC = () => {
         )}
         <ActiveViewComponent />
       </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      {activeView !== 'noc' && (
+        <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 z-50 flex justify-around items-center pb-safe pt-2 h-16 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+          <button 
+            onClick={() => setActiveView('dashboard')}
+            className={`flex flex-col items-center gap-1 transition-all ${activeView === 'dashboard' ? 'text-primary' : 'text-slate-400'}`}
+          >
+            <LayoutDashboard size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Dash</span>
+          </button>
+          <button 
+            onClick={() => setActiveView('orchestrator')}
+            className={`flex flex-col items-center gap-1 transition-all ${activeView === 'orchestrator' ? 'text-primary' : 'text-slate-400'}`}
+          >
+            <Box size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Pods</span>
+          </button>
+          
+          {/* Central Elevated Menu Button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="flex flex-col items-center justify-center -mt-8 w-14 h-14 bg-primary text-white rounded-full shadow-xl shadow-primary/30 border-4 border-white active:scale-90 transition-all"
+          >
+            <Menu size={24} />
+          </button>
+
+          <button 
+            onClick={() => setActiveView('canvas')}
+            className={`flex flex-col items-center gap-1 transition-all ${activeView === 'canvas' ? 'text-primary' : 'text-slate-400'}`}
+          >
+            <Layers size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Map</span>
+          </button>
+          <button 
+            onClick={() => setActiveView('messages')}
+            className={`flex flex-col items-center gap-1 transition-all ${activeView === 'messages' ? 'text-primary' : 'text-slate-400'}`}
+          >
+            <MessageSquare size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Chat</span>
+          </button>
+        </nav>
+      )}
+
+      {/* Mobile Slide-Up Menu (Bottom Sheet) */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60]"
+            />
+            <motion.aside
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 h-[80%] bg-white rounded-t-[32px] shadow-2xl z-[70] flex flex-col overflow-hidden border-t border-slate-200"
+            >
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-6 shrink-0" />
+              
+              <div className="flex-1 overflow-y-auto px-6 pb-12 custom-scrollbar">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Nexus Menu</h2>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-1">System Orchestration</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 bg-slate-100 rounded-full text-slate-400"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { view: 'iam', icon: <Shield size={18} />, label: 'Gatekeeper' },
+                    { view: 'networking', icon: <Network size={18} />, label: 'Traffic' },
+                    { view: 'vault', icon: <Lock size={18} />, label: 'Vault' },
+                    { view: 'gitops', icon: <GitBranch size={18} />, label: 'GitOps' },
+                    { view: 'aidoctor', icon: <Stethoscope size={18} />, label: 'AI Doctor' },
+                    { view: 'chronos', icon: <Calendar size={18} />, label: 'Chronos' },
+                    { view: 'crucible', icon: <Skull size={18} />, label: 'Crucible' },
+                    { view: 'spark', icon: <ZapIcon size={18} />, label: 'Spark' },
+                    { view: 'finops', icon: <TrendingDown size={18} />, label: 'FinOps' },
+                    { view: 'settings', icon: <Settings size={18} />, label: 'Settings' },
+                  ].map((item) => (
+                    <button
+                      key={item.view}
+                      onClick={() => {
+                        setActiveView(item.view as ViewType);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-100 rounded-2xl gap-2 active:bg-primary/5 active:border-primary/20 transition-all"
+                    >
+                      <div className="text-primary">{item.icon}</div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-slate-100">
+                  <button 
+                    onClick={() => {
+                      setActiveView('profile');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-4 w-full p-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">AD</div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">Admin Session</p>
+                      <p className="text-[10px] text-white/40 font-mono uppercase tracking-tighter truncate">belghalimohammed0@gmail.com</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <ContextualNotes />
+      <GlobalQuickChat />
       <TourOverlay />
     </div>
   );

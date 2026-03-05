@@ -14,6 +14,8 @@ interface CanvasProps {
   onLayoutChange: (layout: any[]) => void;
   onRemoveWidget: (id: string) => void;
   onDrop: (type: WidgetType, x: number, y: number) => void;
+  isDraggable?: boolean;
+  isResizable?: boolean;
 }
 
 import { 
@@ -25,7 +27,14 @@ import {
 } from './widgets/WidgetComponents';
 import { WidgetType } from '../types';
 
-export const Canvas: React.FC<CanvasProps> = ({ widgets, onLayoutChange, onRemoveWidget, onDrop }) => {
+export const Canvas: React.FC<CanvasProps> = ({ 
+  widgets, 
+  onLayoutChange, 
+  onRemoveWidget, 
+  onDrop,
+  isDraggable = true,
+  isResizable = true
+}) => {
   const renderWidget = (widget: WidgetInstance) => {
     return <WidgetRenderer widget={widget} />;
   };
@@ -51,14 +60,16 @@ export const Canvas: React.FC<CanvasProps> = ({ widgets, onLayoutChange, onRemov
 
       <ResponsiveGridLayout
         className="layout"
-        layouts={{ lg: layout }}
+        layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
         rowHeight={100}
         onLayoutChange={onLayoutChange}
         draggableHandle=".widget-drag-handle"
         margin={[16, 16]}
-        isDroppable={true}
+        isDraggable={isDraggable}
+        isResizable={isResizable}
+        isDroppable={isDraggable}
         onDrop={(layout: any, item: any, e: any) => {
           const type = e.dataTransfer.getData('widgetType') as WidgetType;
           if (type) {

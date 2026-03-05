@@ -20,6 +20,7 @@ import {
   Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MobileTerminalToolbar } from '../components/MobileTerminalToolbar';
 
 interface VM {
   id: string;
@@ -58,24 +59,24 @@ export const HypervisorManager: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden relative">
-      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar/30">
+      <header className="h-16 border-b border-brand-border flex items-center justify-between px-4 md:px-8 bg-brand-sidebar/30">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 border border-blue-500/20">
+          <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 border border-blue-500/20 shrink-0">
             <Monitor size={20} />
           </div>
           <div>
-            <h1 className="font-serif italic text-xl tracking-tight text-brand-text">Hypervisor VM</h1>
-            <p className="text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">Bare-Metal Virtualization Engine</p>
+            <h1 className="font-serif italic text-lg md:text-xl tracking-tight text-brand-text">Hypervisor</h1>
+            <p className="hidden md:block text-[10px] font-mono text-brand-text/40 uppercase tracking-widest">Bare-Metal Virtualization</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-xs font-bold uppercase rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-            <Plus size={14} /> Create New VM
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-[10px] md:text-xs font-bold uppercase rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+            <Plus size={14} /> <span className="hidden md:inline">Create New VM</span><span className="md:hidden">New VM</span>
           </button>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 space-y-8">
         {/* Resource Pool Progress Bar */}
         <div className="bg-brand-sidebar border border-brand-border rounded-3xl p-8 space-y-6">
           <div className="flex items-center justify-between">
@@ -355,7 +356,7 @@ export const HypervisorManager: React.FC = () => {
                     </div>
 
                     {/* Embedded noVNC Simulation */}
-                    <div className="flex-1 flex items-center justify-center p-12">
+                    <div className="flex-1 flex items-center justify-center p-4 md:p-12">
                       <div className="w-full h-full max-w-5xl aspect-video bg-slate-900 rounded-lg border border-white/5 shadow-2xl overflow-hidden relative group">
                         <img 
                           src={selectedVM.thumbnail} 
@@ -371,33 +372,37 @@ export const HypervisorManager: React.FC = () => {
                             y: [100, 200, 400, 300, 150]
                           }}
                           transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                          className="absolute pointer-events-none"
+                          className="absolute pointer-events-none hidden md:block"
                         >
                           <MousePointer2 size={16} className="text-white drop-shadow-lg" />
                         </motion.div>
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <p className="text-xs font-mono text-white/60 uppercase tracking-widest">Click to focus console</p>
+                          <p className="text-[10px] md:text-xs font-mono text-white/60 uppercase tracking-widest">Click to focus console</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Console Toolbar */}
-                    <div className="h-12 border-t border-white/5 bg-white/2 flex items-center justify-between px-6">
+                    <div className="h-12 border-t border-white/5 bg-white/2 flex items-center justify-between px-4 md:px-6">
                       <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2 text-[10px] font-mono text-white/40 uppercase">
+                        <div className="flex items-center gap-2 text-[9px] md:text-[10px] font-mono text-white/40 uppercase">
                           <Terminal size={12} />
-                          <span>Console Input: Active</span>
+                          <span className="hidden md:inline">Console Input: Active</span>
+                          <span className="md:hidden">Active</span>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-mono text-white/40 uppercase">
+                        <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-white/40 uppercase">
                           <Shield size={12} />
-                          <span>Encrypted Stream</span>
+                          <span>Encrypted</span>
                         </div>
                       </div>
-                      <div className="text-[10px] font-mono text-white/20 uppercase">
-                        Latency: 12ms • FPS: 60
+                      <div className="text-[9px] md:text-[10px] font-mono text-white/20 uppercase">
+                        12ms • 60 FPS
                       </div>
                     </div>
+
+                    {/* Mobile Terminal Toolbar */}
+                    <MobileTerminalToolbar onKeyClick={(key) => console.log('Key pressed:', key)} />
                   </div>
                 </div>
 

@@ -14,7 +14,9 @@ import {
   Lock,
   Eye,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  ChevronRight,
+  MoreVertical
 } from 'lucide-react';
 
 interface AuditLog {
@@ -133,7 +135,7 @@ export const AuditBlackbox: React.FC = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto hidden md:block">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-brand-border bg-brand-bg/20">
@@ -191,6 +193,46 @@ export const AuditBlackbox: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile View: Cards */}
+            <div className="md:hidden divide-y divide-brand-border">
+              {logs.map((log) => (
+                <div key={log.id} className="p-4 space-y-3 active:bg-brand-text/5 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User size={14} className="text-brand-text/30" />
+                      <span className="text-sm font-bold text-brand-text">{log.user}</span>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${
+                      log.severity === 'critical' ? 'bg-red-500' :
+                      log.severity === 'warning' ? 'bg-amber-500' :
+                      'bg-blue-500'
+                    }`} />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center gap-1 text-brand-text/40">
+                      <Clock size={10} />
+                      <span>{log.timestamp}</span>
+                    </div>
+                    <span className="font-mono text-brand-text/30">{log.ip}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <div>
+                      <p className="text-[8px] font-bold text-brand-text/30 uppercase tracking-widest">Action</p>
+                      <p className={`text-[10px] font-bold uppercase mt-0.5 ${
+                        log.severity === 'critical' ? 'text-red-400' :
+                        log.severity === 'warning' ? 'text-amber-400' :
+                        'text-blue-400'
+                      }`}>{log.action}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-bold text-brand-text/30 uppercase tracking-widest">Resource</p>
+                      <p className="text-[10px] font-mono text-brand-text/40 mt-0.5 truncate">{log.resource}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="p-4 bg-brand-bg/50 border-t border-brand-border flex items-center justify-between">

@@ -61,48 +61,49 @@ export const ContainerManager: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col bg-brand-bg overflow-hidden">
-      <header className="h-16 border-b border-brand-border flex items-center justify-between px-8 bg-brand-sidebar">
+      <header className="h-16 border-b border-brand-border flex items-center justify-between px-4 md:px-8 bg-brand-sidebar">
         <div className="flex items-center gap-4">
           <h2 className="text-sm font-bold uppercase tracking-widest text-brand-text/50">Orchestrator</h2>
-          <div className="h-4 w-px bg-brand-border" />
-          <div className="flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
+          <div className="hidden md:block h-4 w-px bg-brand-border" />
+          <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
             <Box size={12} />
             <span>12 Containers Running</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="relative hidden sm:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text/30" size={14} />
             <input 
               type="text" 
               placeholder="Search stacks..."
-              className="bg-brand-text/5 border border-brand-text/10 rounded-md py-1.5 pl-9 pr-4 text-[11px] font-mono outline-none focus:border-primary/50 text-brand-text"
+              className="bg-brand-text/5 border border-brand-text/10 rounded-md py-1.5 pl-9 pr-4 text-[11px] font-mono outline-none focus:border-primary/50 text-brand-text w-32 md:w-auto"
             />
           </div>
-          <button className={`px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase rounded hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 ${diskWaste > 70 ? 'animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.4)]' : ''}`}>
+          <button className={`px-3 md:px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase rounded hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 ${diskWaste > 70 ? 'animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.4)]' : ''}`}>
             <Trash2 size={12} />
-            Prune Unused ({diskWaste}%)
+            <span className="hidden xs:inline">Prune Unused ({diskWaste}%)</span>
+            <span className="xs:hidden">Prune</span>
           </button>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 space-y-6 md:space-y-8">
           
-          {/* Visual Networking Map */}
-          <div className="bg-brand-sidebar border border-brand-border rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          {/* Visual Networking Map - Hidden or simplified on mobile */}
+          <div className="bg-brand-sidebar border border-brand-border rounded-xl p-4 md:p-6">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex items-center gap-2">
                 <Share2 size={16} className="text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Visual Networking</h3>
               </div>
-              <div className="flex gap-4 text-[9px] font-mono text-brand-text/40 uppercase">
+              <div className="hidden sm:flex gap-4 text-[9px] font-mono text-brand-text/40 uppercase">
                 <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Internal Link</span>
                 <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Public Port</span>
               </div>
             </div>
-            <div className="h-48 bg-brand-bg/40 rounded-lg border border-brand-text/5 relative overflow-hidden">
+            <div className="h-32 md:h-48 bg-brand-bg/40 rounded-lg border border-brand-text/5 relative overflow-hidden">
               <svg className="w-full h-full">
                 {/* Connection Lines */}
                 <line x1="20%" y1="50%" x2="50%" y2="30%" stroke="var(--primary)" strokeWidth="1" strokeDasharray="4 4" className="opacity-20" />
@@ -158,26 +159,28 @@ export const ContainerManager: React.FC = () => {
                 </div>
                 <div className="p-4 space-y-2">
                   {stack.containers.map((container) => (
-                    <div key={container.id} className="flex items-center justify-between px-4 py-3 bg-brand-text/2 hover:bg-brand-text/5 rounded-lg transition-colors group">
+                    <div key={container.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 bg-brand-text/2 hover:bg-brand-text/5 rounded-lg transition-colors group gap-4">
                       <div className="flex items-center gap-4">
-                        <div className={`w-2 h-2 rounded-full bg-primary shadow-[0_0_5px_var(--primary)]`} />
+                        <div className={`w-2 h-2 rounded-full bg-primary shadow-[0_0_5px_var(--primary)] shrink-0`} />
                         <div>
                           <div className="text-xs font-mono text-brand-text">{container.name}</div>
                           <div className="text-[9px] text-brand-text/30 font-mono uppercase">Image: {container.image}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <div className="text-[9px] text-brand-text/30 uppercase font-bold">CPU</div>
-                          <div className="text-[10px] font-mono text-primary">{container.cpu}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[9px] text-brand-text/30 uppercase font-bold">MEM</div>
-                          <div className="text-[10px] font-mono text-blue-400">{container.mem}</div>
+                      <div className="flex items-center justify-between sm:justify-end gap-6">
+                        <div className="flex gap-6">
+                          <div className="text-right">
+                            <div className="text-[9px] text-brand-text/30 uppercase font-bold">CPU</div>
+                            <div className="text-[10px] font-mono text-primary">{container.cpu}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[9px] text-brand-text/30 uppercase font-bold">MEM</div>
+                            <div className="text-[10px] font-mono text-blue-400">{container.mem}</div>
+                          </div>
                         </div>
                         <button 
                           onClick={() => handleOpenConsole(container)}
-                          className="p-2 hover:bg-primary/10 rounded text-primary opacity-0 group-hover:opacity-100 transition-all flex items-center gap-2"
+                          className="p-2 hover:bg-primary/10 rounded text-primary md:opacity-0 md:group-hover:opacity-100 transition-all flex items-center gap-2"
                         >
                           <Terminal size={14} />
                           <span className="text-[10px] font-bold uppercase">Manage</span>
@@ -191,8 +194,8 @@ export const ContainerManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Resource Controls Panel */}
-        <div className="w-80 border-l border-brand-border bg-brand-sidebar p-6 flex flex-col gap-8">
+        {/* Resource Controls Panel - Hidden on mobile */}
+        <div className="hidden lg:flex w-80 border-l border-brand-border bg-brand-sidebar p-6 flex-col gap-8">
           <div>
             <div className="flex items-center gap-2 mb-6">
               <Sliders size={16} className="text-primary" />
@@ -263,32 +266,34 @@ export const ContainerManager: React.FC = () => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-[800px] bg-brand-bg border-l border-brand-border shadow-2xl z-50 flex flex-col"
+            className="fixed inset-y-0 right-0 w-full md:w-[800px] bg-brand-bg border-l border-brand-border shadow-2xl z-50 flex flex-col"
           >
-            <div className="h-16 border-b border-brand-border flex items-center justify-between px-6 bg-brand-sidebar">
+            <div className="h-16 border-b border-brand-border flex items-center justify-between px-4 md:px-6 bg-brand-sidebar">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <Box size={20} />
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Box size={18} />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text">{activeContainer.name}</h3>
-                  <div className="text-[10px] font-mono text-brand-text/40 uppercase">{activeContainer.image}</div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text truncate">{activeContainer.name}</h3>
+                  <div className="text-[9px] md:text-[10px] font-mono text-brand-text/40 uppercase truncate">{activeContainer.image}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <div className="flex bg-brand-text/5 p-1 rounded-lg border border-brand-text/10">
                   {(['logs', 'shell', 'manage'] as const).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                      className={`px-2 md:px-4 py-1.5 rounded text-[9px] md:text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 md:gap-2 ${
                         activeTab === tab ? 'bg-primary text-primary-foreground shadow-lg' : 'text-brand-text/40 hover:text-brand-text/60'
                       }`}
                     >
                       {tab === 'logs' && <Terminal size={12} />}
                       {tab === 'shell' && <FileCode size={12} />}
                       {tab === 'manage' && (isDatabase(activeContainer.image) ? <Database size={12} /> : <Box size={12} />)}
-                      {tab === 'manage' ? (isDatabase(activeContainer.image) ? 'Data' : 'Files') : tab}
+                      <span className="hidden sm:inline">
+                        {tab === 'manage' ? (isDatabase(activeContainer.image) ? 'Data' : 'Files') : tab}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -296,7 +301,7 @@ export const ContainerManager: React.FC = () => {
                   onClick={() => setActiveContainer(null)} 
                   className="p-2 hover:bg-brand-text/10 rounded-full text-brand-text/40 hover:text-brand-text transition-colors"
                 >
-                  <ChevronRight size={24} />
+                  <ChevronRight size={20} />
                 </button>
               </div>
             </div>

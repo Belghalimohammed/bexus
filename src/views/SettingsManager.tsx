@@ -27,8 +27,10 @@ import {
   Laptop,
   Chrome,
   ShieldAlert,
-  Key
+  Key,
+  Menu as MenuIcon
 } from 'lucide-react';
+import { LongPressButton } from '../components/LongPressButton';
 
 type SettingSection = 'general' | 'ai' | 'security' | 'infrastructure' | 'gateway' | 'storage' | 'notifications';
 
@@ -115,6 +117,7 @@ const TagInput: React.FC<{ label: string; tags: string[]; setTags: (tags: string
 
 export const SettingsManager: React.FC = () => {
   const [activeSection, setActiveSection] = useState<SettingSection>('general');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [aiMode, setAiMode] = useState<'cloud' | 'local'>('cloud');
@@ -158,61 +161,104 @@ export const SettingsManager: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex bg-slate-950 overflow-hidden">
-      {/* Left Column: Sticky Sidebar */}
-      <div className="w-72 border-r border-slate-800 bg-slate-950 flex flex-col sticky top-0 h-full">
-        <div className="p-8 border-b border-slate-800">
-          <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-            <input 
-              type="text" 
-              placeholder="Search settings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-10 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-            />
-          </div>
-        </div>
-        
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {filteredNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                activeSection === item.id 
-                  ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' 
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
-              }`}
-            >
-              <span className={activeSection === item.id ? 'text-indigo-400' : 'text-slate-500'}>
-                {item.icon}
-              </span>
-              {item.label}
-              {activeSection === item.id && (
-                <ChevronRight size={14} className="ml-auto opacity-50" />
-              )}
-            </button>
-          ))}
-        </nav>
+    <div className="flex-1 flex flex-col md:flex-row bg-slate-950 overflow-hidden relative">
+      {/* Left Column: Sticky Sidebar - Hidden on mobile, slide-over */}
+      <AnimatePresence>
+        {(isSidebarOpen || (typeof window !== 'undefined' && window.innerWidth > 768)) && (
+          <motion.aside 
+            initial={typeof window !== 'undefined' && window.innerWidth <= 768 ? { x: '-100%' } : false}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`fixed md:relative inset-y-0 left-0 z-50 w-72 border-r border-slate-800 bg-slate-950 flex flex-col h-full shadow-2xl md:shadow-none ${!isSidebarOpen && 'hidden md:flex'}`}
+          >
+            <div className="p-8 border-b border-slate-800 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Settings</h2>
+              <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-slate-800 rounded-full text-slate-400">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 pb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                <input 
+                  type="text" 
+                  placeholder="Search settings..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-10 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+            </div>
+            
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+              {filteredNavItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    if (window.innerWidth <= 768) setIsSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeSection === item.id 
+                      ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+                  }`}
+                >
+                  <span className={activeSection === item.id ? 'text-indigo-400' : 'text-slate-500'}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                  {activeSection === item.id && (
+                    <ChevronRight size={14} className="ml-auto opacity-50" />
+                  )}
+                </button>
+              ))}
+            </nav>
 
-        <div className="p-6 border-t border-slate-800">
-          <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
-              AD
+            <div className="p-6 border-t border-slate-800">
+              <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800">
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
+                  AD
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-white">Admin User</span>
+                  <span className="text-[10px] text-slate-500 uppercase">Pro Plan</span>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-white">Admin User</span>
-              <span className="text-[10px] text-slate-500 uppercase">Pro Plan</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* Right Column: Scrollable Form Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
-        <div className="max-w-4xl mx-auto p-12 space-y-12">
+      <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth bg-slate-950">
+        <header className="h-16 md:h-20 border-b border-slate-800 flex items-center justify-between px-4 md:px-12 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 hover:bg-slate-800 rounded-lg text-slate-400">
+              <MenuIcon size={20} />
+            </button>
+            <h1 className="text-lg md:text-2xl font-bold text-white tracking-tight">
+              {navItems.find(i => i.id === activeSection)?.label}
+            </h1>
+          </div>
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 md:px-8 py-2 md:py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+          >
+            {isSaving ? (
+              <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save size={18} />
+            )}
+            <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
+            <span className="sm:hidden">{isSaving ? '...' : 'Save'}</span>
+          </button>
+        </header>
+
+        <div className="max-w-4xl mx-auto p-4 md:p-12 space-y-8 md:space-y-12">
           
           {/* Section: General */}
           {activeSection === 'general' && (

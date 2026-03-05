@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Zap, Activity, Clock, Shield, AlertTriangle, Info } from 'lucide-react';
+import { Search, Zap, Activity, Clock, Shield, AlertTriangle, Info, Lock } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LongPressButton } from '../components/LongPressButton';
 
 const data = [
   { value: 400 }, { value: 300 }, { value: 600 }, { value: 800 },
@@ -96,18 +97,18 @@ export const GlobalDashboard: React.FC = () => {
       </AnimatePresence>
 
       {/* Top Bar */}
-      <header className="h-16 border-b border-brand-border bg-brand-sidebar flex items-center justify-between px-8 z-10">
+      <header className="h-16 border-b border-brand-border bg-brand-sidebar flex items-center justify-between px-4 md:px-8 z-10">
         <div className="flex items-center gap-6 flex-1">
-          <div className="relative w-96 group">
+          <div className="relative w-full md:w-96 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text/30 group-focus-within:opacity-100 group-focus-within:text-primary transition-all" size={16} />
             <input 
               type="text" 
-              placeholder="Search infrastructure... (Cmd+K)"
+              placeholder="Search infrastructure..."
               className="w-full bg-brand-text/5 border border-brand-text/10 rounded-md py-1.5 pl-10 pr-4 text-xs font-mono outline-none focus:border-primary/50 focus:bg-brand-text/10 transition-all text-brand-text"
             />
           </div>
           
-          <div className={`flex items-center gap-2 px-3 py-1 border rounded-full transition-all duration-500 ${
+          <div className={`hidden md:flex items-center gap-2 px-3 py-1 border rounded-full transition-all duration-500 ${
             healthStatus === 'green' ? 'bg-primary/10 border-primary/20 text-primary' :
             healthStatus === 'yellow' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500' :
             'bg-red-500/10 border-red-500/20 text-red-500'
@@ -123,18 +124,20 @@ export const GlobalDashboard: React.FC = () => {
           </div>
         </div>
         
-        <button 
-          onClick={handlePanic}
-          className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-md hover:bg-red-600 hover:text-white transition-all group active:scale-95"
-        >
-          <Zap size={14} className="group-hover:fill-current" />
-          <span className="text-[10px] font-bold uppercase tracking-wider">Panic Button</span>
-        </button>
+        <div className="flex items-center gap-4">
+          <LongPressButton 
+            onConfirm={handlePanic}
+            className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-md hover:bg-red-600 hover:text-white transition-all group active:scale-95"
+          >
+            <Zap size={14} className="group-hover:fill-current" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Panic Button</span>
+          </LongPressButton>
+        </div>
       </header>
 
       {/* Bento Grid */}
-      <main className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-brand-bg">
-        <div className="grid grid-cols-12 gap-6 max-w-7xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar bg-brand-bg">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 max-w-7xl mx-auto">
           
           {/* Resource Gauges */}
           <motion.div 

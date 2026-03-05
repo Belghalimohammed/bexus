@@ -17,7 +17,7 @@ export const IAMManager: React.FC = () => {
   return (
     <div className="flex-1 flex bg-brand-bg overflow-hidden">
       {/* Sidebar Org Switcher */}
-      <div className="w-64 border-r border-brand-border bg-brand-sidebar flex flex-col">
+      <div className="hidden md:flex w-64 border-r border-brand-border bg-brand-sidebar flex-col">
         <div className="p-6 border-b border-brand-border">
           <label className="text-[10px] uppercase tracking-widest font-bold text-brand-text/40 mb-2 block">Organization</label>
           <select className="w-full bg-brand-text/5 border border-brand-text/10 rounded px-3 py-2 text-xs font-mono outline-none focus:border-primary/50 text-brand-text">
@@ -44,11 +44,11 @@ export const IAMManager: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 border-b border-brand-border flex items-center justify-between px-8">
+        <header className="h-16 border-b border-brand-border flex items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-4">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-brand-text/50">Identity Management</h2>
-            <div className="h-4 w-px bg-brand-border" />
-            <div className="flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
+            <h2 className="text-xs md:text-sm font-bold uppercase tracking-widest text-brand-text/50">Identity</h2>
+            <div className="hidden md:block h-4 w-px bg-brand-border" />
+            <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-brand-text/40">
               <Users size={12} />
               <span>24 Active Users</span>
             </div>
@@ -79,8 +79,8 @@ export const IAMManager: React.FC = () => {
           <UserInviteWizard onClose={() => setIsInviteOpen(false)} />
         </Modal>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-          <div className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8">
+          <div className="bg-brand-sidebar border border-brand-border rounded-xl overflow-hidden hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-brand-border bg-brand-text/5">
@@ -158,6 +158,57 @@ export const IAMManager: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Stacked Cards */}
+          <div className="md:hidden space-y-4">
+            {[
+              { name: 'Alex Rivera', email: 'alex@nexus.io', role: 'Admin', groups: 3, tfa: true },
+              { name: 'Sarah Chen', email: 'sarah@nexus.io', role: 'Dev', groups: 2, tfa: true },
+              { name: 'Mike Ross', email: 'mike@nexus.io', role: 'Dev', groups: 1, tfa: false },
+              { name: 'Emma Wilson', email: 'emma@nexus.io', role: 'Viewer', groups: 1, tfa: true },
+            ].map((user, i) => (
+              <div 
+                key={i} 
+                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm active:scale-[0.98] transition-all"
+                onClick={() => setSelectedUser(user.name)}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 border border-brand-text/10 flex items-center justify-center text-xs font-bold text-brand-text">
+                    {user.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">{user.name}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">{user.email}</div>
+                  </div>
+                  <div className="ml-auto">
+                    <MoreVertical size={16} className="text-slate-300" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Role</label>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                      user.role === 'Admin' ? 'bg-purple-500/10 text-purple-600 border border-purple-500/20' : 
+                      user.role === 'Dev' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 
+                      'bg-slate-500/10 text-slate-600 border border-slate-500/20'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">2FA Status</label>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${user.tfa ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span className={`text-[10px] font-bold ${user.tfa ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {user.tfa ? 'Active' : 'Disabled'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Service Accounts Section */}
