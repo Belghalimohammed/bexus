@@ -24,9 +24,19 @@ import {
   Hash,
   CheckCircle2,
   X,
-  Send
+  Send,
+  Sparkles,
+  ShieldAlert,
+  Zap as ZapIcon,
+  MessageSquareCode,
+  ShieldCheck,
+  BrainCircuit,
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface FunctionFile {
   id: string;
@@ -98,15 +108,74 @@ const FileTreeItem: React.FC<{
 export const SparkFunctions: React.FC = () => {
   const [activeFile, setActiveFile] = useState<FunctionFile>(INITIAL_FILES[0].children![0]);
   const [code, setCode] = useState(activeFile.code || '');
-  const [activeTab, setActiveTab] = useState<'editor' | 'env' | 'npm'>('editor');
+  const [ghostText, setGhostText] = useState('');
+  const [activeTab, setActiveTab] = useState<'editor' | 'env' | 'npm' | 'middleware'>('editor');
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [testPayload, setTestPayload] = useState('{\n  "name": "Nexus User",\n  "action": "test"\n}');
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isSemanticRoutingEnabled, setIsSemanticRoutingEnabled] = useState(false);
 
   useEffect(() => {
     if (activeFile.code) setCode(activeFile.code);
+    setGhostText('');
   }, [activeFile]);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsAiGenerating(true);
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Write a serverless function in ${activeFile.name.endsWith('.ts') ? 'TypeScript' : 'JavaScript'} based on this request: ${aiPrompt}. Return ONLY the code, no markdown blocks.`,
+      });
+      const generatedCode = response.text || '';
+      setCode(generatedCode);
+      setAiPrompt('');
+    } catch (error) {
+      console.error("AI Generation failed:", error);
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const handleGenerateTestCases = async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Based on this serverless function code:\n\n${code}\n\nGenerate 3 JSON test payloads: 1. Happy Path, 2. Malformed Data, 3. Injection Attack. Return ONLY a JSON object with keys "happy", "malformed", "attack".`,
+        config: { responseMimeType: "application/json" }
+      });
+      const cases = JSON.parse(response.text || '{}');
+      setTestPayload(JSON.stringify(cases.happy, null, 2));
+      setTestResult(`AI Generated 3 test cases. Currently showing: Happy Path.\n\nOther cases available:\n\nMalformed: ${JSON.stringify(cases.malformed)}\n\nAttack: ${JSON.stringify(cases.attack)}`);
+    } catch (error) {
+      console.error("Test generation failed:", error);
+    }
+  };
+
+  const handleAiAction = async (action: 'optimize' | 'comments' | 'security') => {
+    const prompts = {
+      optimize: "Optimize this code for performance and readability.",
+      comments: "Add helpful JSDoc comments to this code.",
+      security: "Find and fix any security flaws in this code."
+    };
+    
+    setIsAiGenerating(true);
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `${prompts[action]}\n\nCode:\n${code}\n\nReturn ONLY the improved code, no markdown.`,
+      });
+      setCode(response.text || code);
+    } catch (error) {
+      console.error("AI Action failed:", error);
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
 
   const handleDeploy = () => {
     setIsDeploying(true);
@@ -251,10 +320,44 @@ export const SparkFunctions: React.FC = () => {
                 <Package size={12} />
                 NPM Packages
               </button>
+              <button
+                onClick={() => setActiveTab('middleware')}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-2 ${
+                  activeTab === 'middleware' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <BrainCircuit size={12} />
+                Middleware
+              </button>
             </div>
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* AI Prompt Header */}
+            <div className="px-6 py-4 bg-white border-b border-slate-100 shrink-0">
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition-opacity" />
+                <div className="relative flex items-center gap-3 bg-white border border-indigo-500/30 rounded-2xl px-4 py-2 shadow-sm">
+                  <Bot size={18} className="text-indigo-600" />
+                  <input 
+                    type="text" 
+                    placeholder="Nexus AI Developer: Describe the function you want to build..."
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                  />
+                  <button 
+                    onClick={handleAiGenerate}
+                    disabled={isAiGenerating}
+                    className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="flex-1 relative">
               <AnimatePresence mode="wait">
                 {activeTab === 'editor' && (
@@ -265,25 +368,94 @@ export const SparkFunctions: React.FC = () => {
                     exit={{ opacity: 0 }}
                     className="absolute inset-0"
                   >
-                    <Editor
-                      height="100%"
-                      defaultLanguage="typescript"
-                      value={code}
-                      onChange={(v) => setCode(v || '')}
-                      theme="light"
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 13,
-                        fontFamily: 'JetBrains Mono',
-                        padding: { top: 20 },
-                        scrollBeyondLastLine: false,
-                        lineNumbers: 'on',
-                        roundedSelection: false,
-                        readOnly: false,
-                        cursorStyle: 'line',
-                        automaticLayout: true,
-                      }}
-                    />
+                    <div className="absolute inset-0">
+                      <Editor
+                        height="100%"
+                        defaultLanguage="typescript"
+                        value={code}
+                        onMount={(editor, monaco) => {
+                          editor.onKeyDown((e) => {
+                            if (e.keyCode === monaco.KeyCode.Tab && ghostText) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const position = editor.getPosition();
+                              if (position) {
+                                editor.executeEdits('ai-ghost-text', [{
+                                  range: {
+                                    startLineNumber: position.lineNumber,
+                                    startColumn: position.column,
+                                    endLineNumber: position.lineNumber,
+                                    endColumn: position.column
+                                  },
+                                  text: '\n  ' + ghostText.replace('// AI Suggestion: ', ''),
+                                  forceMoveMarkers: true
+                                }]);
+                              }
+                              setGhostText('');
+                            }
+                          });
+                        }}
+                        onChange={(v) => {
+                          setCode(v || '');
+                          // Simulate Ghost Text
+                          if (v && v.length > code.length && v.endsWith('\n')) {
+                            setGhostText('// AI Suggestion: Add error handling here...');
+                          } else {
+                            setGhostText('');
+                          }
+                        }}
+                        theme="light"
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 13,
+                          fontFamily: 'JetBrains Mono',
+                          padding: { top: 20 },
+                          scrollBeyondLastLine: false,
+                          lineNumbers: 'on',
+                          roundedSelection: false,
+                          readOnly: false,
+                          cursorStyle: 'line',
+                          automaticLayout: true,
+                          inlineSuggest: {
+                            enabled: true
+                          }
+                        }}
+                      />
+                      
+                      {/* AI Action Bar */}
+                      <div className="absolute top-4 right-8 flex items-center gap-2 p-1 bg-white/80 backdrop-blur border border-slate-200 rounded-xl shadow-xl z-10">
+                        <button 
+                          onClick={() => handleAiAction('optimize')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-indigo-50 rounded-lg text-[10px] font-bold text-slate-600 hover:text-indigo-600 transition-all"
+                        >
+                          <ZapIcon size={12} />
+                          Optimize
+                        </button>
+                        <div className="w-px h-4 bg-slate-200" />
+                        <button 
+                          onClick={() => handleAiAction('comments')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-indigo-50 rounded-lg text-[10px] font-bold text-slate-600 hover:text-indigo-600 transition-all"
+                        >
+                          <MessageSquareCode size={12} />
+                          Comments
+                        </button>
+                        <div className="w-px h-4 bg-slate-200" />
+                        <button 
+                          onClick={() => handleAiAction('security')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-rose-50 rounded-lg text-[10px] font-bold text-slate-600 hover:text-rose-600 transition-all"
+                        >
+                          <ShieldCheck size={12} />
+                          Security
+                        </button>
+                      </div>
+
+                      {/* Ghost Text Simulation Overlay */}
+                      {ghostText && (
+                        <div className="absolute top-[20px] left-[60px] pointer-events-none text-slate-400 font-mono text-[13px] opacity-50">
+                          {ghostText}
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
 
@@ -357,6 +529,70 @@ export const SparkFunctions: React.FC = () => {
                     </div>
                   </motion.div>
                 )}
+
+                {activeTab === 'middleware' && (
+                  <motion.div
+                    key="middleware"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute inset-0 p-8 space-y-8 overflow-y-auto custom-scrollbar"
+                  >
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-bold text-slate-900">Middleware Configuration</h3>
+                      <p className="text-xs text-slate-400">Configure AI-driven request processing and routing.</p>
+                    </div>
+
+                    <div className="p-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
+                            <BrainCircuit size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">Enable AI Semantic Routing</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Route by intent, not path</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setIsSemanticRoutingEnabled(!isSemanticRoutingEnabled)}
+                          className={`w-12 h-6 rounded-full transition-all relative ${isSemanticRoutingEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isSemanticRoutingEnabled ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+
+                      {isSemanticRoutingEnabled && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-4 pt-4 border-t border-indigo-100"
+                        >
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Routing Logic</label>
+                            <div className="p-4 bg-white border border-indigo-100 rounded-xl space-y-3">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-600 font-medium">If intent is <span className="text-indigo-600 font-bold">"Angry Customer"</span></span>
+                                <ChevronRight size={14} className="text-slate-300" />
+                                <span className="text-slate-600 font-medium">Route to <span className="text-indigo-600 font-bold">slack-webhook.js</span></span>
+                              </div>
+                              <div className="h-px bg-slate-50" />
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-600 font-medium">If intent is <span className="text-indigo-600 font-bold">"Feature Request"</span></span>
+                                <ChevronRight size={14} className="text-slate-300" />
+                                <span className="text-slate-600 font-medium">Route to <span className="text-indigo-600 font-bold">jira-sync.ts</span></span>
+                              </div>
+                            </div>
+                          </div>
+                          <button className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                            <Plus size={14} />
+                            Add Semantic Rule
+                          </button>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
 
@@ -367,13 +603,23 @@ export const SparkFunctions: React.FC = () => {
                   <Terminal size={14} className="text-slate-400" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Test Console</span>
                 </div>
-                <button 
-                  onClick={handleTest}
-                  className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
-                >
-                  <Play size={12} className="fill-current" />
-                  Run Test
-                </button>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={handleGenerateTestCases}
+                    className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                  >
+                    <Sparkles size={12} />
+                    Generate Edge Cases (AI)
+                  </button>
+                  <div className="w-px h-4 bg-slate-200" />
+                  <button 
+                    onClick={handleTest}
+                    className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                  >
+                    <Play size={12} className="fill-current" />
+                    Run Test
+                  </button>
+                </div>
               </div>
               <div className="flex-1 flex overflow-hidden">
                 <div className="w-1/2 border-r border-slate-200 flex flex-col">
